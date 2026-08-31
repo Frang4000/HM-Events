@@ -15,6 +15,6 @@ window.FUNCTION_SHEET_CONFIG = {
   supabaseKey: "sb_publishable__8tyAtHew3mu8bjKUXKhTQ_2ULIqM4H",
 
   // The shared staff user created in Supabase → Authentication → Users.
-  staffEmail: "Donna@lees.im"
+  staffEmail: "frang@mjh.com"
 
 };
