@@ -6,7 +6,8 @@ everyone sees the same sheet the moment it changes.
 
 - Areas: Front Bar · Back Bar · Whole Venue · Restaurant · Beer Garden + Restaurant
 - Colour-coded by size, priority flags, and reminders for deposits and old events
-- Deposit receipts attach as photos; restaurant bookings skip deposits entirely
+- Deposit receipts attach as photos; restaurant bookings skip deposits entirely,
+  and any booking can have the deposit waived with a tick
 - Every booking records who took it
 
 ---
@@ -57,6 +58,28 @@ You need a free Supabase account. Nothing else, and no card.
 
 Post the address in the staff WhatsApp group with the password. On a phone:
 **Share → Add to Home Screen** puts it on the home screen like a normal app.
+
+---
+
+## Adding the no-deposit tick
+
+**Only needed on a database made before this feature existed.** If the “No
+deposit needed” tick on the booking form is greyed out, the database is missing
+one column. Add it once:
+
+1. Supabase → **SQL Editor** → **New query**.
+2. Paste this and press **Run**:
+
+   ```sql
+   alter table public.bookings
+     add column if not exists no_deposit boolean not null default false;
+   ```
+
+3. Reload the board. The tick is live.
+
+Until you do, everything else keeps working normally — the board just won't let
+anyone waive a deposit. (Running the whole of `schema.sql` again does the same
+thing and is equally safe.)
 
 ---
 

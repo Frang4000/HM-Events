@@ -17,11 +17,16 @@ create table if not exists public.bookings (
   notes          text,
   has_dj         boolean     not null default false,
   has_stage      boolean     not null default false,
+  no_deposit     boolean     not null default false,
   payments       jsonb       not null default '[]'::jsonb,
   refunds        jsonb       not null default '[]'::jsonb,
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
+
+-- Safe to re-run on a database made before the "no deposit needed" tick
+-- existed: it adds the column and leaves everything else alone.
+alter table public.bookings add column if not exists no_deposit boolean not null default false;
 
 -- Sorting and the "next 7 days" counts read this constantly.
 create index if not exists bookings_event_date_idx on public.bookings (event_date);
