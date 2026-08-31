@@ -84,4 +84,13 @@ dependencies. Commit a change and GitHub Pages republishes within a minute.
 
 ---
 
+## Handing it over
+
+If this needs to move to a new owner — someone leaving, or the venue taking it
+in-house — the whole sequence is written down in **HANDOVER.md**: transferring
+the repository, setting up a fresh Supabase account and carrying the bookings
+across, and connecting it to a new Claude Code account.
+
+---
+
 Hotel Maroubra — built in-house by Alex Frangos.
