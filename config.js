@@ -1,20 +1,20 @@
 // ---------------------------------------------------------------
 //  Hotel Maroubra — Function Sheet
-//  Fill in these three lines once. Nothing else in this repository
-//  needs editing. Full instructions are in README.md.
+//  These three values point the page at its database. They are safe
+//  to sit in a public repo: on their own they can read and write
+//  nothing, because the table only answers a request carrying a
+//  signed-in staff session. The staff PASSWORD is never kept here.
 // ---------------------------------------------------------------
 window.FUNCTION_SHEET_CONFIG = {
 
-  // Supabase → Settings → API  (looks like https://abcdefgh.supabase.co)
-  supabaseUrl: "",
+  // Supabase → Settings → API
+  supabaseUrl: "https://kigaydybfeofcegkiuhn.supabase.co",
 
-  // The PUBLISHABLE key (older projects call it the "anon" key).
-  // This one is safe to have here — the database only answers it for
-  // someone who has signed in with the staff password.
-  supabaseKey: "",
+  // The publishable key (older projects call it the "anon" key).
+  // Never put the service_role / secret key here.
+  supabaseKey: "sb_publishable__8tyAtHew3mu8bjKUXKhTQ_2ULIqM4H",
 
-  // The email of the single shared staff user you created in
-  // Supabase → Authentication → Users.
-  staffEmail: ""
+  // The shared staff user created in Supabase → Authentication → Users.
+  staffEmail: "Donna@lees.im"
 
 };
