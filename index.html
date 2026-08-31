@@ -1,0 +1,1800 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F4925">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Function Sheet">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Function Sheet</title>
+<style id="app-style">
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    /* Hotel Maroubra brand marks — fixed, sampled from the logo, same in both themes */
+    --brand-green:#1F4925; --brand-green-deep:#153318; --gold:#C8A144; --on-brand:#F4F1E2;
+
+    --paper:#F7F4EA; --surface:#FFFFFF; --surface-2:#EDE6D2;
+    --ink:#17241A; --ink-soft:#55624F; --ink-faint:#8B9483;
+    --line:#E0D8BE; --line-strong:#CBC09E;
+    --accent:#8A6A1A; --accent-strong:#6E5313; --accent-soft:#F1E6C4; --accent-ink:#4A3A10;
+    --danger:#B3261E; --danger-soft:#FBE7E5;
+    --warn:#B2560E; --warn-soft:#FBE9D8;
+    --good:#256B4C; --good-soft:#E1F1E8;
+    --p-low:#6B7684; --p-low-soft:#EDEFF2;
+    --p-medium:#3457A6; --p-medium-soft:#E4EAF7;
+    --p-high:#A23E63; --p-high-soft:#F7E4EB;
+    --p-urgent:#C6323B; --p-urgent-soft:#FBE3E4;
+    --shadow: 0 1px 2px rgba(20,25,35,.06), 0 6px 20px -8px rgba(20,25,35,.18);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#10160F; --surface:#172018; --surface-2:#202B1F;
+      --ink:#EDEEE6; --ink-soft:#A9B39F; --ink-faint:#77816F;
+      --line:#2C382A; --line-strong:#3B4A37;
+      --accent:#D9B95C; --accent-strong:#E8CC85; --accent-soft:#3A2F14; --accent-ink:#F1DDA6;
+      --danger:#E5645C; --danger-soft:#3A1E1D;
+      --warn:#E5985A; --warn-soft:#3A2814;
+      --good:#63C596; --good-soft:#123527;
+      --p-low:#9AA4B2; --p-low-soft:#252B34;
+      --p-medium:#7C9EE0; --p-medium-soft:#1F2B44;
+      --p-high:#E28FAE; --p-high-soft:#3A2130;
+      --p-urgent:#F1767D; --p-urgent-soft:#3D1F22;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#10160F; --surface:#172018; --surface-2:#202B1F;
+    --ink:#EDEEE6; --ink-soft:#A9B39F; --ink-faint:#77816F;
+    --line:#2C382A; --line-strong:#3B4A37;
+    --accent:#D9B95C; --accent-strong:#E8CC85; --accent-soft:#3A2F14; --accent-ink:#F1DDA6;
+    --danger:#E5645C; --danger-soft:#3A1E1D;
+    --warn:#E5985A; --warn-soft:#3A2814;
+    --good:#63C596; --good-soft:#123527;
+    --p-low:#9AA4B2; --p-low-soft:#252B34;
+    --p-medium:#7C9EE0; --p-medium-soft:#1F2B44;
+    --p-high:#E28FAE; --p-high-soft:#3A2130;
+    --p-urgent:#F1767D; --p-urgent-soft:#3D1F22;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 24px -8px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:'Work Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  /* Phone-first touch behaviour: no 300ms tap delay, no grey flash, and
+     nothing a thumb has to aim at is smaller than a fingertip. */
+  button, .tab, .chip, label.checkopt{
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important;}
+  }
+  .num{ font-family:'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+
+  a{color:var(--accent);}
+  button{font-family:inherit;}
+  input,select,textarea{font-family:inherit; font-size:16px; color:var(--ink);}
+
+  #app{max-width:640px; margin:0 auto; padding:0 0 calc(104px + env(safe-area-inset-bottom));}
+
+  /* ---------- header ---------- */
+  /* The green/gold band is the hotel's own brand mark, not a themed UI
+     surface — it stays the same in light and dark mode, so its text uses
+     the fixed --on-brand / --gold tokens rather than the swapped ones. */
+  .topbar{
+    background: linear-gradient(180deg, var(--brand-green), var(--brand-green-deep));
+    padding:20px 18px 16px; text-align:center; border-radius:0 0 20px 20px;
+  }
+  .topbar h1{ margin:0; }
+  .brand-logo{ width:min(168px, 46vw); height:auto; display:block; margin:0 auto; }
+  .tool-label{
+    font-family:'Oswald', system-ui, sans-serif; font-weight:600; text-transform:uppercase;
+    letter-spacing:.12em; font-size:12px; color:var(--gold); margin:11px 0 0;
+  }
+  .subhead{ color:rgba(244,241,226,.62); font-size:12.5px; margin:5px 0 0; }
+
+  .banner{
+    margin:0 18px 12px; padding:10px 14px; border-radius:10px; font-size:13.5px;
+    display:flex; align-items:center; gap:10px; box-shadow:var(--shadow);
+  }
+  .banner.readonly{ background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line); }
+  .banner.draft{ background:var(--accent-soft); color:var(--accent-ink); border:1px solid var(--accent); }
+  .banner.stale{ background:var(--warn-soft); color:var(--warn); border:1px solid var(--warn); }
+  .banner.stale button{ background:var(--warn); }
+  .banner button{
+    border:none; background:var(--accent); color:#fff; padding:6px 12px; border-radius:7px;
+    font-weight:600; font-size:12.5px; cursor:pointer; flex:none;
+  }
+  .banner button.ghost{ background:transparent; color:inherit; text-decoration:underline; padding:6px 4px; }
+  .banner[hidden]{display:none;}
+
+  /* ---------- stats ---------- */
+  .stats{ display:grid; grid-template-columns:repeat(4,1fr); gap:7px; padding:0 14px 12px; }
+  .stat{
+    background:var(--surface); border:1px solid var(--line); border-radius:12px;
+    padding:9px 4px; text-align:center; box-shadow:var(--shadow); min-width:0;
+  }
+  .stat b{ display:block; font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:600; line-height:1.15; }
+  .stat span{
+    display:block; font-size:9.5px; color:var(--ink-soft); text-transform:uppercase;
+    letter-spacing:.03em; margin-top:3px; line-height:1.25;
+  }
+  .stat.alert b{ color:var(--warn); }
+  .stat.urgent b{ color:var(--danger); }
+
+  /* ---------- controls ---------- */
+  .controls{ padding:0 14px 10px; }
+  /* The tab strip scrolls on a narrow phone; the mask fades the last tab
+     out at the edge so it's obvious there's more to the right. */
+  .tabs{
+    display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
+    mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
+  }
+  .tabs.no-mask{ -webkit-mask-image:none; mask-image:none; }
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{
+    flex:none; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    padding:8px 13px; border-radius:999px; font-size:13px; font-weight:600; cursor:pointer;
+    white-space:nowrap; min-height:38px;
+  }
+  .tab.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  .tab .n{ font-family:'IBM Plex Mono',monospace; opacity:.75; margin-left:4px; }
+
+  .searchrow{ display:flex; gap:8px; margin:8px 0; }
+  .searchrow input{
+    flex:1; border:1px solid var(--line); background:var(--surface); border-radius:9px;
+    padding:9px 12px; color:var(--ink);
+  }
+  .searchrow input::placeholder{ color:var(--ink-faint); }
+
+  .chiprow{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .chip{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+    padding:7px 12px; border-radius:999px; font-size:12.5px; font-weight:500; cursor:pointer;
+    min-height:34px;
+  }
+  .chip.on{ background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent); }
+
+  .legend{ display:flex; gap:12px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-soft); padding:2px 0 4px; }
+  .legend b{ color:var(--ink); }
+  .legend .sw{ display:inline-flex; align-items:center; gap:5px; }
+  .legend .dot{ width:9px; height:9px; border-radius:3px; display:inline-block; }
+
+  /* ---------- list & cards ---------- */
+  #list{ padding:4px 14px 8px; display:flex; flex-direction:column; gap:10px; }
+  .empty{
+    text-align:center; padding:48px 20px; color:var(--ink-soft); font-size:14px;
+  }
+  .empty b{ display:block; color:var(--ink); font-size:16px; margin-bottom:6px; }
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:13px;
+    box-shadow:var(--shadow); border-left:6px solid var(--band-color, var(--line));
+    overflow:hidden;
+  }
+  .card-head{ display:flex; gap:12px; padding:12px 13px 10px; cursor:pointer; align-items:flex-start; }
+  .datebadge{
+    flex:none; width:52px; text-align:center; padding:5px 0 6px; border-radius:9px;
+    background:var(--surface-2);
+  }
+  .datebadge .d{ display:block; font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600; line-height:1.1; }
+  .datebadge .m{ display:block; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); }
+  .datebadge .w{ display:block; font-size:9.5px; color:var(--ink-faint); margin-top:1px; }
+
+  .card-body{ flex:1; min-width:0; }
+  .card-toprow{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:3px; }
+  .area-tag{
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--accent-strong); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .card-title{
+    margin:1px 0 5px; font-size:16.5px; font-weight:600; text-wrap:balance;
+    overflow-wrap:anywhere;
+  }
+  .card-when{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink-soft);
+    margin:0 0 5px; font-variant-numeric:tabular-nums;
+  }
+  .taken-by{ font-size:11.5px; color:var(--ink-faint); margin-top:6px; }
+  .card-meta{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+
+  .pill{ display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:600; }
+  .size-chip{ font-family:'IBM Plex Mono',monospace; }
+  .priority-low{ background:var(--p-low-soft); color:var(--p-low); }
+  .priority-medium{ background:var(--p-medium-soft); color:var(--p-medium); }
+  .priority-high{ background:var(--p-high-soft); color:var(--p-high); }
+  .priority-urgent{ background:var(--p-urgent-soft); color:var(--p-urgent); }
+  .status-pill{ background:var(--surface-2); color:var(--ink-soft); }
+  .extra-pill{ background:var(--accent-soft); color:var(--accent-ink); }
+
+  .flags{ display:flex; flex-wrap:wrap; gap:5px; margin-top:7px; }
+  .flag{ font-size:11px; font-weight:600; padding:3px 8px; border-radius:6px; }
+  .flag-today{ background:var(--danger-soft); color:var(--danger); }
+  .flag-soon{ background:var(--warn-soft); color:var(--warn); }
+  .flag-week{ background:var(--accent-soft); color:var(--accent-ink); }
+  .flag-deposit{ background:var(--warn-soft); color:var(--warn); }
+  .flag-refund{ background:var(--warn-soft); color:var(--warn); }
+  .flag-past{ background:var(--surface-2); color:var(--ink-faint); }
+
+  .chevron{ flex:none; color:var(--ink-faint); margin-top:6px; transition:transform .15s; }
+  .card.open .chevron{ transform:rotate(180deg); }
+
+  .card-detail{ display:none; padding:0 15px 15px; border-top:1px solid var(--line); }
+  .card.open .card-detail{ display:block; }
+  .detail-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; margin:12px 0; font-size:13.5px; }
+  .detail-grid .k{ color:var(--ink-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; margin-bottom:2px; }
+  .detail-grid .v{ color:var(--ink); }
+  .detail-full{ grid-column:1/-1; }
+  .notes-box{
+    background:var(--surface-2); border-radius:9px; padding:10px 12px; font-size:13.5px;
+    white-space:pre-wrap; color:var(--ink-soft); margin-top:2px; overflow-wrap:anywhere;
+  }
+  .detail-grid .v{ overflow-wrap:anywhere; }
+
+  .filesection{ margin-top:10px; }
+  .filesection h4{
+    font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint);
+    margin:0 0 6px; font-weight:600;
+  }
+  .files{ display:flex; flex-wrap:wrap; gap:8px; }
+  .file-thumb{
+    width:64px; height:64px; border-radius:9px; border:1px solid var(--line); overflow:hidden;
+    background:var(--surface-2); position:relative; cursor:pointer; flex:none;
+  }
+  .file-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .file-thumb .pdf{ display:flex; align-items:center; justify-content:center; height:100%; font-size:10px; font-weight:700; color:var(--ink-soft); }
+  .file-empty{ font-size:12.5px; color:var(--ink-faint); font-style:italic; }
+
+  .card-actions{ display:flex; gap:8px; margin-top:14px; }
+  .btn{
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+    min-height:42px;
+  }
+  /* Primary actions use the fixed brand gold+green pairing (not the
+     theme-swapped --accent) so they read correctly in both themes, the
+     same way the logo's own gold-on-green always does. */
+  .btn.primary{ background:var(--gold); border-color:var(--gold); color:var(--brand-green-deep); }
+  .btn.danger{ color:var(--danger); border-color:var(--danger-soft); }
+  .btn:disabled{ opacity:.55; cursor:not-allowed; }
+  body.read-only .write-only{ display:none !important; }
+
+  /* ---------- bottom action bar ----------
+     A floating round button sat on top of whichever card happened to be
+     under it. A full-width bar anchored to the bottom is the same thumb
+     distance away, never covers a booking, and the gradient lets the list
+     dissolve underneath it instead of being cut off. */
+  .actionbar{
+    position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex;
+    padding:14px 14px calc(12px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, transparent, var(--paper) 38%);
+    pointer-events:none;
+  }
+  .fab{
+    flex:1; max-width:612px; margin:0 auto;
+    background:var(--gold); color:var(--brand-green-deep); border:none;
+    border-radius:999px; padding:15px 22px; font-size:15.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 8px 24px -8px rgba(0,0,0,.45); display:flex; align-items:center;
+    justify-content:center; gap:8px; min-height:54px; pointer-events:auto;
+  }
+  .fab:active{ transform:scale(.985); }
+
+  /* ---------- dialogs ---------- */
+  /* dvh keeps the sheet sized to what's actually on screen when the mobile
+     browser chrome or the keyboard shows up; vh is the pre-dvh fallback. */
+  dialog{
+    border:none; border-radius:18px 18px 0 0; padding:0; width:100%; max-width:640px;
+    background:var(--surface); color:var(--ink); margin:auto auto 0;
+    box-shadow:0 -10px 40px rgba(0,0,0,.3); max-height:92vh; max-height:92dvh;
+  }
+  @media (min-width:680px){
+    dialog{ border-radius:16px; margin:auto; }
+  }
+  dialog::backdrop{ background:rgba(10,12,16,.55); }
+  .dialog-inner{
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    max-height:92vh; max-height:92dvh;
+    padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .dialog-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+  .dialog-head h2{ font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.02em; font-size:19px; margin:0; }
+  .closex{
+    border:none; background:var(--surface-2); color:var(--ink-soft); width:42px; height:42px;
+    border-radius:999px; cursor:pointer; font-size:17px; line-height:1; flex:none;
+  }
+
+  .field{ margin-bottom:13px; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:5px; }
+  .field .hint{ font-size:11.5px; color:var(--ink-faint); margin-top:4px; }
+  .field input, .field select, .field textarea{
+    width:100%; border:1px solid var(--line); background:var(--paper); border-radius:9px;
+    padding:11px; color:var(--ink); min-height:46px;
+  }
+  .field input[type="checkbox"]{ min-height:0; }
+  .field textarea{ resize:vertical; min-height:64px; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .sizepreview{ margin-top:6px; }
+
+  .checkrow{ display:flex; gap:10px; }
+  .checkopt{
+    flex:1; display:flex; align-items:center; gap:8px; border:1px solid var(--line);
+    background:var(--paper); border-radius:9px; padding:10px 12px; font-size:14px;
+    font-weight:600; cursor:pointer; color:var(--ink);
+  }
+  .checkopt input{ width:17px; height:17px; accent-color:var(--accent); flex:none; }
+  .deposit-note{
+    font-size:12.5px; color:var(--ink-soft); background:var(--surface-2); border-radius:9px;
+    padding:10px 12px; margin:0 0 13px;
+  }
+  #depositGroup[hidden], .deposit-note[hidden]{ display:none; }
+
+  .error{ color:var(--danger); font-size:12px; margin-top:4px; display:none; }
+  .field.invalid input, .field.invalid select{ border-color:var(--danger); }
+  .field.invalid .error{ display:block; }
+
+  .uploadbtn{
+    border:1px dashed var(--line-strong); background:var(--surface-2); color:var(--ink-soft);
+    padding:12px; border-radius:9px; font-size:12.5px; font-weight:600; cursor:pointer; width:100%;
+    min-height:46px;
+  }
+  .draftfiles{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .draftfile{ width:68px; height:68px; border-radius:8px; overflow:hidden; position:relative; border:1px solid var(--line); background:var(--surface); }
+  .draftfile img{ width:100%; height:100%; object-fit:cover; }
+  .draftfile .pdf{ display:flex; align-items:center; justify-content:center; height:100%; font-size:10px; font-weight:700; color:var(--ink-soft); }
+  .draftfile .rm{
+    position:absolute; top:2px; right:2px; width:24px; height:24px; border-radius:999px; border:none;
+    background:rgba(20,20,20,.78); color:#fff; font-size:13px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .sizebudget{ font-size:11px; color:var(--ink-faint); margin-top:10px; text-align:right; }
+
+  .dialog-foot{ display:flex; gap:10px; margin-top:16px; }
+  .dialog-foot .btn{ flex:1; padding:11px; font-size:14px; }
+
+  .stale-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 0; border-top:1px solid var(--line);
+  }
+  .stale-row:first-child{ border-top:none; }
+  .stale-info{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .stale-info b{ font-size:14px; font-weight:600; }
+  .stale-info span{ font-size:12px; color:var(--ink-soft); }
+  .stale-actions{ display:flex; gap:6px; flex:none; }
+  .stale-actions .btn{ padding:6px 11px; font-size:12px; }
+
+  /* lightbox */
+  #lightbox{ padding:0; background:transparent; box-shadow:none; max-width:92vw; }
+  #lightbox .dialog-inner{ padding:0; max-height:88vh; }
+  #lightbox img{ max-width:92vw; max-height:88vh; display:block; border-radius:10px; }
+  #lightbox iframe{ width:88vw; height:80vh; border:none; border-radius:10px; background:#fff; }
+  #lightbox .lbclose{
+    position:absolute; top:-14px; right:-14px; width:34px; height:34px; border-radius:999px; border:none;
+    background:var(--surface); color:var(--ink); font-size:16px; cursor:pointer; box-shadow:var(--shadow);
+  }
+  #lightbox .lbwrap{ position:relative; }
+
+  /* toast */
+  .toast-host{ position:fixed; left:0; right:0; bottom:18px; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:60; pointer-events:none; }
+  .toast{
+    background:var(--ink); color:var(--paper); padding:10px 16px; border-radius:9px; font-size:13px;
+    box-shadow:var(--shadow); max-width:90vw; text-align:center;
+  }
+
+  .footer-note{ text-align:center; color:var(--ink-faint); font-size:11px; padding:14px 18px 2px; }
+  .credit{
+    text-align:center; color:var(--ink-faint); font-size:9.5px; letter-spacing:.04em;
+    padding:0 18px 10px; margin:0; opacity:.75;
+  }
+
+  /* ---------- narrow phones ----------
+     Paired fields stay side by side down to ~360px (most phones), which
+     keeps this ten-field form from turning into a long scroll; below that
+     there isn't room for a date picker in half a screen, so they stack. */
+  @media (max-width:359px){
+    .row2{ grid-template-columns:1fr; gap:0; }
+  }
+  @media (max-width:400px){
+    .topbar{ padding:18px 14px 16px; }
+    .stat b{ font-size:18px; }
+    .stat span{ font-size:9px; }
+    .card-head{ padding:11px 11px 10px; gap:10px; }
+    .datebadge{ width:46px; }
+    .card-title{ font-size:15.5px; }
+    .stale-row{ flex-direction:column; align-items:stretch; gap:8px; }
+    .stale-actions .btn{ flex:1; }
+  }
+  @media (max-width:340px){
+    .stats{ grid-template-columns:repeat(2,1fr); }
+    .checkrow{ flex-direction:column; }
+  }
+
+
+  /* ---------- sign in ---------- */
+  .visually-hidden{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+  }
+  .auth-gate{
+    position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+    padding:24px 18px calc(24px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg, var(--brand-green), var(--brand-green-deep));
+  }
+  .auth-gate[hidden]{ display:none; }
+  .auth-card{ width:100%; max-width:360px; text-align:center; }
+  .auth-logo{ width:min(190px,52vw); height:auto; display:block; margin:0 auto 14px; }
+  .auth-kicker{
+    font-family:'Oswald',system-ui,sans-serif; font-weight:600; text-transform:uppercase;
+    letter-spacing:.12em; font-size:12px; color:var(--gold); margin:0 0 26px;
+  }
+  .auth-card label{
+    display:block; text-align:left; font-size:12px; font-weight:600;
+    color:rgba(244,241,226,.8); margin-bottom:6px;
+  }
+  .auth-card input{
+    width:100%; border:1px solid rgba(244,241,226,.28); background:rgba(0,0,0,.22);
+    border-radius:10px; padding:13px; color:#F4F1E2; font-size:16px; min-height:50px;
+  }
+  .auth-card input::placeholder{ color:rgba(244,241,226,.4); }
+  .auth-card .btn.primary{ width:100%; margin-top:14px; min-height:52px; font-size:15.5px; }
+  .auth-error{ color:#F3B0A8; font-size:13px; margin:10px 0 0; text-align:left; }
+  .auth-error[hidden]{ display:none; }
+  .auth-note{ color:rgba(244,241,226,.55); font-size:11.5px; margin:14px 0 0; }
+  .auth-note code{ color:var(--gold); font-family:'IBM Plex Mono',monospace; }
+
+  .sync-dot{
+    position:fixed; top:10px; right:12px; z-index:30;
+    background:var(--gold); color:var(--brand-green-deep); font-size:10.5px; font-weight:700;
+    padding:4px 10px; border-radius:999px; letter-spacing:.04em;
+  }
+  .sync-dot[hidden]{ display:none; }
+  .signout{
+    background:none; border:none; color:var(--ink-faint); font-size:10.5px;
+    text-decoration:underline; cursor:pointer; padding:4px 8px; margin-bottom:8px;
+  }
+
+  ::selection{ background:var(--accent-soft); color:var(--accent-ink); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+</style>
+
+<div id="page-root">
+<div id="app">
+  <div class="topbar">
+    <h1><img class="brand-logo" src="logo.png" alt="Hotel Maroubra"></h1>
+    <p class="tool-label">Event Bookings</p>
+    <p class="subhead" id="dateline"></p>
+  </div>
+
+  <div class="banner readonly" id="roBanner" hidden>
+    <span id="roBannerText">View only on this link — you can check the sheet, but not add to it. Send new bookings to a manager to put in.</span>
+  </div>
+  <div class="banner draft" id="draftBanner" hidden>
+    <span>You had a booking in progress that wasn't saved.</span>
+    <button id="draftRestore">Restore</button>
+    <button class="ghost" id="draftDiscard">Discard</button>
+  </div>
+  <div class="banner stale" id="staleBanner" hidden>
+    <span><span id="staleBannerCount">0</span> event(s) are 2+ days old and still sitting here.</span>
+    <button id="staleReview">Review</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="controls">
+    <div class="tabs" id="tabs"></div>
+    <div class="searchrow">
+      <input type="text" id="search" placeholder="Search organiser or notes…">
+    </div>
+    <div class="chiprow" id="areaChips"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div id="list"></div>
+
+  <p class="footer-note" id="storageNote"></p>
+  <button class="signout" id="signOut" type="button">Sign out of this phone</button>
+  <p class="credit">Hotel Maroubra — built in-house by Alex Frangos</p>
+</div>
+
+<div class="actionbar write-only" id="actionBar">
+  <button class="fab write-only" id="fabNew">+ New booking</button>
+</div>
+
+<dialog id="bookingDialog">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2 id="formTitle">New booking</h2>
+      <button class="closex" id="formClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <!-- novalidate: the required attributes stay for semantics, but the
+         browser's own popup would pre-empt this form's inline messages and
+         look different on every phone. The submit handler validates. -->
+    <form id="bookingForm" novalidate>
+      <input type="hidden" id="f-id">
+      <div class="row2">
+        <div class="field" id="f-date-field">
+          <label for="f-date">Event date</label>
+          <input type="date" id="f-date" required>
+          <div class="error">Pick a date for the event.</div>
+        </div>
+        <div class="field">
+          <label for="f-time">Time <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+          <input type="time" id="f-time">
+        </div>
+      </div>
+
+      <div class="field" id="f-area-field">
+        <label for="f-area">Where</label>
+        <select id="f-area" required>
+          <option value="" disabled selected>Choose an area…</option>
+          <option>Front Bar</option>
+          <option>Back Bar</option>
+          <option>Whole Venue</option>
+          <option>Restaurant</option>
+          <option>Beer Garden + Restaurant</option>
+        </select>
+        <div class="error">Pick which part of the venue.</div>
+      </div>
+
+      <div class="row2">
+        <div class="field" id="f-pax-field">
+          <label for="f-pax">Pax</label>
+          <input type="number" id="f-pax" min="1" step="1" inputmode="numeric" placeholder="e.g. 45" required>
+          <div class="error">How many guests?</div>
+          <div class="sizepreview" id="sizePreview"></div>
+        </div>
+        <div class="field">
+          <label for="f-priority">Priority</label>
+          <select id="f-priority">
+            <option>Low</option>
+            <option selected>Medium</option>
+            <option>High</option>
+            <option>Urgent</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Extras <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+        <div class="checkrow">
+          <label class="checkopt"><input type="checkbox" id="f-dj"> 🎧 DJ</label>
+          <label class="checkopt"><input type="checkbox" id="f-stage"> 🎤 Stage</label>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label for="f-organiser">Organiser <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+          <input type="text" id="f-organiser" placeholder="Name">
+        </div>
+        <div class="field">
+          <label for="f-contact">Contact <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+          <input type="text" id="f-contact" placeholder="Phone or email">
+        </div>
+      </div>
+
+      <div class="field" id="f-taken-field">
+        <label for="f-taken">Taken by</label>
+        <input type="text" id="f-taken" placeholder="Who took this booking" autocomplete="name" required>
+        <div class="error">Put your name down — every booking needs one.</div>
+      </div>
+
+      <div class="field">
+        <label for="f-status">Status</label>
+        <select id="f-status">
+          <option>Enquiry</option>
+          <option>Confirmed</option>
+          <option>Deposit Paid</option>
+          <option>Deposit Refunded</option>
+          <option>Completed</option>
+          <option>Cancelled</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="f-notes">Details / notes <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+        <textarea id="f-notes" placeholder="Room setup, catering, run sheet, anything the team should know…"></textarea>
+      </div>
+
+      <div id="depositGroup">
+        <div class="field">
+          <label for="f-deposit">Deposit amount <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+          <input type="text" id="f-deposit" placeholder="e.g. £200">
+        </div>
+
+        <div class="field">
+          <label>Deposit payment proof <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+          <div class="draftfiles" id="paymentFiles"></div>
+          <button type="button" class="uploadbtn" id="addPaymentFile">📎 Add receipt / screenshot</button>
+        </div>
+
+        <div class="field">
+          <label>Deposit refund proof <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+          <div class="draftfiles" id="refundFiles"></div>
+          <button type="button" class="uploadbtn" id="addRefundFile">📎 Add refund proof</button>
+        </div>
+      </div>
+      <p class="deposit-note" id="depositNote" hidden>Restaurant bookings don't need a deposit.</p>
+
+      <div class="sizebudget" id="sizeBudget"></div>
+
+      <div class="dialog-foot">
+        <button type="button" class="btn" id="formCancel">Cancel</button>
+        <button type="submit" class="btn primary" id="formSave">Save booking</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="confirmDialog">
+  <div class="dialog-inner">
+    <div class="dialog-head"><h2 id="confirmTitle">Are you sure?</h2></div>
+    <p id="confirmBody" style="color:var(--ink-soft);font-size:14px;"></p>
+    <div class="dialog-foot">
+      <button class="btn" id="confirmNo" type="button">Cancel</button>
+      <button class="btn danger" id="confirmYes" type="button">Delete</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="staleDialog">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2>Old events</h2>
+      <button class="closex" id="staleClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin:0 0 14px;">
+      <span id="staleIntroCount">0</span> booking(s) are more than two days past their date and haven't
+      been cleared or moved. Nothing is removed on its own — pick one for each, or leave them for next time.
+    </p>
+    <div id="staleList"></div>
+    <div class="dialog-foot">
+      <button type="button" class="btn" id="staleNotNow">Not now</button>
+      <button type="button" class="btn danger write-only" id="staleClearAll">Clear all</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="lightbox">
+  <div class="dialog-inner">
+    <div class="lbwrap" id="lbWrap"></div>
+  </div>
+</dialog>
+
+<input type="file" id="fileInput" accept="image/*,.pdf,application/pdf" style="display:none">
+
+<div class="toast-host" id="toastHost"></div>
+<div class="sync-dot" id="syncDot" hidden>Saving…</div>
+</div>
+
+<div class="auth-gate" id="authGate" hidden>
+  <div class="auth-card">
+    <img class="auth-logo" src="logo.png" alt="Hotel Maroubra">
+    <p class="auth-kicker">Event Bookings</p>
+    <form id="authForm">
+      <input class="visually-hidden" id="authUser" type="text" autocomplete="username" readonly tabindex="-1" aria-hidden="true">
+      <label for="authPassword">Staff password</label>
+      <input type="password" id="authPassword" autocomplete="current-password" placeholder="••••••••">
+      <p class="auth-error" id="authError" hidden></p>
+      <button class="btn primary" id="authSubmit" type="submit">Open the sheet</button>
+      <p class="auth-note">One password for the whole team. Your phone stays signed in.</p>
+    </form>
+    <div id="authSetup" hidden>
+      <p class="auth-error">This board isn't connected to its database yet.</p>
+      <p class="auth-note">Open <code>config.js</code> in the repository and fill in the project URL, key and staff email from the setup steps in the README.</p>
+    </div>
+  </div>
+</div>
+
+
+<script src="config.js"></script>
+<script id="app-script">
+(function(){
+  "use strict";
+
+
+  var AREAS = ["Front Bar","Back Bar","Whole Venue","Restaurant","Beer Garden + Restaurant"];
+  var PRIORITY_ORDER = {Urgent:0, High:1, Medium:2, Low:3};
+  var SIZE_BANDS = [
+    {key:"small",  label:"Small",       max:20,       bg:"#CFEBE7", fg:"#123B37"},
+    {key:"medium", label:"Medium",      max:60,       bg:"#7BC4BC", fg:"#0C2E2A"},
+    {key:"large",  label:"Large",       max:120,      bg:"#2E8F8A", fg:"#F4FBFA"},
+    {key:"huge",   label:"Whole-venue", max:Infinity, bg:"#145F5C", fg:"#EAF7F6"}
+  ];
+  var MAX_ATTACH_MB = 12; // soft budget out of the 16MB artifact cap
+
+  function sizeBand(pax){
+    var n = parseInt(pax, 10);
+    if (!(n >= 1)) return SIZE_BANDS[0];
+    for (var i=0;i<SIZE_BANDS.length;i++){ if (n <= SIZE_BANDS[i].max) return SIZE_BANDS[i]; }
+    return SIZE_BANDS[SIZE_BANDS.length-1];
+  }
+  // Anything read back off a booking is treated as possibly missing: the
+  // board outlives any one version of this page, and a half-filled record
+  // should render as a gap, never take the whole list down with it.
+  function safeStr(v, fallback){
+    return (typeof v === 'string' && v.trim()) ? v : (fallback || '');
+  }
+  function priorityOf(b){
+    var p = safeStr(b.priority, 'Medium');
+    return PRIORITY_ORDER[p] != null ? p : 'Medium';
+  }
+  function escapeHtml(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function todayYMD(){
+    var d = new Date(); d.setHours(0,0,0,0);
+    return d;
+  }
+  function parseYMD(s){
+    var p = s.split("-"); return new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+  }
+  function daysUntil(dateStr){
+    var d = parseYMD(dateStr);
+    return Math.round((d - todayYMD()) / 86400000);
+  }
+  function fmtDateLong(dateStr){
+    var d = parseYMD(dateStr);
+    return d.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', year:'numeric'});
+  }
+  function fmtDateBadge(dateStr){
+    var d = parseYMD(dateStr);
+    return {
+      day: d.getDate(),
+      month: d.toLocaleDateString('en-GB',{month:'short'}).toUpperCase(),
+      weekday: d.toLocaleDateString('en-GB',{weekday:'short'})
+    };
+  }
+  // "19:30" -> "7:30pm". A run sheet is read at a glance behind the bar, and
+  // 24-hour times get misread; the stored value stays 24-hour either way.
+  function fmtTime(hhmm){
+    if (!hhmm) return '';
+    var parts = String(hhmm).split(':');
+    var h = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return String(hhmm);
+    var suffix = h < 12 ? 'am' : 'pm';
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    return h12 + ':' + (m < 10 ? '0' + m : m) + suffix;
+  }
+  // Sort key that keeps same-day bookings in running order: an untimed
+  // booking sorts after the timed ones on its day rather than at random.
+  function whenKey(b){
+    return safeStr(b.date, '9999-12-31') + 'T' + safeStr(b.time, '99:99');
+  }
+  function todayKey(){
+    var d = todayYMD();
+    return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+  }
+
+  // ---------------- state ----------------
+  var state = { bookings: [] };
+  var view = { tab: 'attention', areas: [], search: '' };
+  var isReadOnly = false;
+  var openCardId = null;
+
+  // ---------------- rendering ----------------
+  function computeFlags(b){
+    var flags = [];
+    if (b.status === 'Cancelled') return flags;
+    var du = daysUntil(b.date);
+    if (du === 0) flags.push({cls:'flag-today', label:'Today'});
+    else if (du === 1) flags.push({cls:'flag-soon', label:'Tomorrow'});
+    else if (du > 1 && du <= 7) flags.push({cls:'flag-week', label:'This week'});
+    else if (du < 0) flags.push({cls:'flag-past', label:'Past'});
+
+    var active = ['Enquiry','Confirmed'].indexOf(b.status) !== -1;
+    if (areaNeedsDeposit(b.area) && active && du >= 0 && du <= 14 && (b.payments||[]).length === 0){
+      flags.push({cls:'flag-deposit', label:'Chase deposit'});
+    }
+    if (areaNeedsDeposit(b.area) && du < 0 && (b.payments||[]).length > 0 && (b.refunds||[]).length === 0
+        && b.status !== 'Cancelled' && b.status !== 'Deposit Refunded'){
+      flags.push({cls:'flag-refund', label:'Refund pending'});
+    }
+    return flags;
+  }
+
+  function needsAttention(b){
+    if (b.status === 'Cancelled' || b.status === 'Completed') return false;
+    var pri = priorityOf(b);
+    if (pri === 'Urgent' || pri === 'High') return true;
+    if (computeFlags(b).length > 0) return true;
+    if (b.status === 'Enquiry') return true;
+    return false;
+  }
+
+  function visibleBookings(){
+    var list = state.bookings.slice();
+    // Every tab runs in date order. An earlier version ranked "needs
+    // attention" by urgency, which put a deposit chase for a booking in two
+    // weeks above an event happening tomorrow and read as a broken list —
+    // the tab already filters to what needs doing, so the order is simply
+    // soonest first, which is how a run sheet is scanned.
+    if (view.tab === 'attention'){
+      list = list.filter(needsAttention);
+      list.sort(function(a,b){ return whenKey(a).localeCompare(whenKey(b)); });
+    } else if (view.tab === 'upcoming'){
+      list = list.filter(function(b){ return daysUntil(b.date) >= 0 && b.status !== 'Cancelled'; });
+      list.sort(function(a,b){ return whenKey(a).localeCompare(whenKey(b)); });
+    } else if (view.tab === 'past'){
+      list = list.filter(function(b){ return daysUntil(b.date) < 0; });
+      list.sort(function(a,b){ return whenKey(b).localeCompare(whenKey(a)); });
+    } else {
+      list.sort(function(a,b){ return whenKey(a).localeCompare(whenKey(b)); });
+    }
+    if (view.areas.length){
+      list = list.filter(function(b){ return view.areas.indexOf(b.area) !== -1; });
+    }
+    if (view.search.trim()){
+      var q = view.search.trim().toLowerCase();
+      list = list.filter(function(b){
+        return (b.organiser||'').toLowerCase().indexOf(q) !== -1 ||
+               (b.notes||'').toLowerCase().indexOf(q) !== -1 ||
+               (b.takenBy||'').toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    return list;
+  }
+
+  function renderStats(){
+    var all = state.bookings;
+    var live = all.filter(function(b){ return b.status !== 'Cancelled'; });
+    var upcoming7 = live.filter(function(b){ var d=daysUntil(b.date); return d>=0 && d<=7; }).length;
+    var chase = live.filter(function(b){ return computeFlags(b).some(function(f){return f.cls==='flag-deposit';}); }).length;
+    var urgent = live.filter(function(b){ return priorityOf(b)==='Urgent' && daysUntil(b.date)>=0; }).length;
+    var el = document.getElementById('stats');
+    el.innerHTML =
+      '<div class="stat"><b class="num">'+live.length+'</b><span>Live bookings</span></div>'+
+      '<div class="stat"><b class="num">'+upcoming7+'</b><span>Next 7 days</span></div>'+
+      '<div class="stat'+(chase?' alert':'')+'"><b class="num">'+chase+'</b><span>Chase deposit</span></div>'+
+      '<div class="stat'+(urgent?' urgent':'')+'"><b class="num">'+urgent+'</b><span>Urgent</span></div>';
+  }
+
+  function renderTabs(){
+    var all = state.bookings;
+    var counts = {
+      attention: all.filter(needsAttention).length,
+      upcoming: all.filter(function(b){ return daysUntil(b.date)>=0 && b.status!=='Cancelled'; }).length,
+      all: all.length,
+      past: all.filter(function(b){ return daysUntil(b.date)<0; }).length
+    };
+    var tabs = [
+      ['attention','Needs attention'], ['upcoming','Upcoming'], ['all','All'], ['past','Past']
+    ];
+    document.getElementById('tabs').innerHTML = tabs.map(function(t){
+      var active = view.tab === t[0] ? ' active' : '';
+      return '<button class="tab'+active+'" data-tab="'+t[0]+'">'+t[1]+' <span class="n">'+counts[t[0]]+'</span></button>';
+    }).join('');
+    updateTabMask();
+  }
+
+  // Fade the right edge only while there is actually more tab strip to
+  // scroll to, so nothing looks clipped on a wide screen.
+  function updateTabMask(){
+    var el = document.getElementById('tabs');
+    var more = el.scrollWidth - el.clientWidth - el.scrollLeft > 4;
+    el.classList.toggle('no-mask', !more);
+  }
+
+  function renderAreaChips(){
+    document.getElementById('areaChips').innerHTML = AREAS.map(function(a){
+      var on = view.areas.indexOf(a) !== -1 ? ' on' : '';
+      return '<button class="chip'+on+'" data-area="'+escapeHtml(a)+'">'+escapeHtml(a)+'</button>';
+    }).join('');
+  }
+
+  function renderLegend(){
+    document.getElementById('legend').innerHTML = '<b>Size</b> ' + SIZE_BANDS.map(function(s,i){
+      var upto = s.max===Infinity ? (SIZE_BANDS[i-1].max+1)+'+' : (i===0?'1–':(SIZE_BANDS[i-1].max+1)+'–')+s.max;
+      return '<span class="sw"><span class="dot" style="background:'+s.bg+'"></span>'+s.label+' ('+upto+')</span>';
+    }).join('');
+  }
+
+  function fileThumb(f, cls){
+    if (!f) return '';
+    if (f.type === 'application/pdf'){
+      return '<div class="'+cls+'" data-file="'+f.id+'"><div class="pdf">PDF</div></div>';
+    }
+    return '<div class="'+cls+'" data-file="'+f.id+'"><img src="'+f.dataUrl+'" alt=""></div>';
+  }
+
+  function renderList(){
+    var list = visibleBookings();
+    var host = document.getElementById('list');
+    if (!list.length){
+      var msg = state.bookings.length ? 'Nothing here' : 'No bookings yet';
+      var sub = state.bookings.length ? 'Try a different tab or filter.' : 'Tap “+ New booking” when one comes in.';
+      host.innerHTML = '<div class="empty"><b>'+msg+'</b>'+sub+'</div>';
+      return;
+    }
+    host.innerHTML = list.map(cardHtml).join('');
+  }
+
+  function extrasPillsHtml(b){
+    var pills = '';
+    if (b.hasDJ) pills += '<span class="pill extra-pill">🎧 DJ</span>';
+    if (b.hasStage) pills += '<span class="pill extra-pill">🎤 Stage</span>';
+    return pills;
+  }
+
+  function cardHtml(b){
+    var band = sizeBand(b.pax);
+    var badge = fmtDateBadge(b.date);
+    var flags = computeFlags(b);
+    var open = openCardId === b.id;
+    var area = safeStr(b.area, 'Unassigned');
+    var title = b.organiser ? escapeHtml(b.organiser) : escapeHtml(area) + ' booking';
+    var statusClass = 'status-pill';
+    var needsDeposit = areaNeedsDeposit(b.area);
+    var priority = priorityOf(b);
+    var timeText = fmtTime(b.time);
+
+    var flagsHtml = flags.map(function(f){ return '<span class="flag '+f.cls+'">'+f.label+'</span>'; }).join('');
+    // Medium is the default priority, so a pill on every card said nothing.
+    // Only Low / High / Urgent get a badge; the detail row always shows it.
+
+    var depositSection = needsDeposit ?
+      '<div class="filesection"><h4>Deposit payment proof</h4><div class="files">'+
+        ((b.payments||[]).length ? b.payments.map(function(f){return fileThumb(f,'file-thumb');}).join('') : '<span class="file-empty">None attached</span>')+
+      '</div></div>'+
+      '<div class="filesection"><h4>Deposit refund proof</h4><div class="files">'+
+        ((b.refunds||[]).length ? b.refunds.map(function(f){return fileThumb(f,'file-thumb');}).join('') : '<span class="file-empty">None attached</span>')+
+      '</div></div>'
+      : '';
+
+    var detail =
+      '<div class="detail-grid">'+
+        '<div><div class="k">Date</div><div class="v num">'+fmtDateLong(b.date)+(timeText?' · '+timeText:'')+'</div></div>'+
+        '<div><div class="k">Area</div><div class="v">'+escapeHtml(area)+'</div></div>'+
+        '<div><div class="k">Pax</div><div class="v num">'+escapeHtml(b.pax)+' — '+band.label+'</div></div>'+
+        '<div><div class="k">Deposit</div><div class="v">'+(needsDeposit ? (b.depositAmount?escapeHtml(b.depositAmount):'—') : 'Not required')+'</div></div>'+
+        '<div><div class="k">Priority</div><div class="v">'+priority+'</div></div>'+
+        (b.contact ? '<div class="detail-full"><div class="k">Contact</div><div class="v">'+escapeHtml(b.contact)+'</div></div>' : '')+
+        ((b.hasDJ || b.hasStage) ? '<div class="detail-full"><div class="k">Extras</div><div class="v">'+[b.hasDJ?'DJ':null, b.hasStage?'Stage':null].filter(Boolean).join(' · ')+'</div></div>' : '')+
+        '<div class="detail-full"><div class="k">Taken by</div><div class="v">'+escapeHtml(safeStr(b.takenBy,'—'))+'</div></div>'+
+      '</div>'+
+      (b.notes ? '<div class="notes-box">'+escapeHtml(b.notes)+'</div>' : '')+
+      depositSection+
+      '<div class="card-actions write-only">'+
+        '<button class="btn" data-edit="'+b.id+'" type="button">Edit</button>'+
+        '<button class="btn danger" data-delete="'+b.id+'" type="button">Delete</button>'+
+      '</div>';
+
+    return (
+      '<article class="card'+(open?' open':'')+'" style="--band-color:'+band.bg+'" data-id="'+b.id+'">'+
+        '<div class="card-head" data-toggle="'+b.id+'">'+
+          '<div class="datebadge"><span class="d num">'+badge.day+'</span><span class="m">'+badge.month+'</span><span class="w">'+badge.weekday+'</span></div>'+
+          '<div class="card-body">'+
+            '<div class="card-toprow"><span class="area-tag">'+escapeHtml(area)+'</span>'+
+              (priority !== 'Medium' ? '<span class="pill priority-'+priority.toLowerCase()+'">'+priority+'</span>' : '')+'</div>'+
+            '<h3 class="card-title">'+title+'</h3>'+
+            (timeText ? '<p class="card-when">'+timeText+'</p>' : '')+
+            '<div class="card-meta">'+
+              '<span class="pill size-chip" style="background:'+band.bg+';color:'+band.fg+'">'+escapeHtml(b.pax)+' pax · '+band.label+'</span>'+
+              '<span class="pill '+statusClass+'">'+escapeHtml(safeStr(b.status,'Enquiry'))+'</span>'+
+              extrasPillsHtml(b)+
+            '</div>'+
+            (flagsHtml ? '<div class="flags">'+flagsHtml+'</div>' : '')+
+            (b.takenBy ? '<p class="taken-by">Taken by '+escapeHtml(b.takenBy)+'</p>' : '')+
+          '</div>'+
+          '<span class="chevron">▾</span>'+
+        '</div>'+
+        '<div class="card-detail">'+detail+'</div>'+
+      '</article>'
+    );
+  }
+
+  // Only worth saying once there is actually something stored — "0.00 MB
+  // of 12 MB" on an empty board is noise at the foot of the page.
+  function renderStorageNote(){
+    var mb = new Blob([JSON.stringify(state)]).size / (1024*1024);
+    document.getElementById('storageNote').textContent = mb >= 0.05
+      ? 'Attachments use about ' + mb.toFixed(1) + ' MB of the ' + MAX_ATTACH_MB + ' MB budget for this board.'
+      : '';
+  }
+
+  // Every date-dependent thing on this page — the header date, Today /
+  // Tomorrow / This week, "Chase deposit", the stale list — is computed
+  // against "now". A board left open on the bar's tablet overnight would
+  // otherwise still be showing yesterday's answers, so the day is watched
+  // and the page re-renders itself the moment it turns over.
+  var renderedDay = null;
+  function refreshIfDayChanged(){
+    if (renderedDay !== todayKey()) renderAll();
+  }
+
+  function renderAll(){
+    renderedDay = todayKey();
+    document.getElementById('dateline').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    renderStats();
+    renderTabs();
+    renderAreaChips();
+    renderLegend();
+    renderList();
+    renderStorageNote();
+    renderStaleList();
+    document.body.classList.toggle('read-only', isReadOnly);
+    document.getElementById('roBanner').hidden = !isReadOnly;
+  }
+
+  // ---------------- storage (Supabase) ----------------
+  // The board lives in a Postgres table, reached over Supabase's REST API.
+  // No SDK: three verbs and a bearer token is the whole of it, and skipping
+  // the library keeps this page a single file with nothing to build.
+  var CFG = window.FUNCTION_SHEET_CONFIG || {};
+  var BASE = String(CFG.supabaseUrl || '').replace(/\/+$/, '');
+  var REST = BASE + '/rest/v1';
+  var AUTH = BASE + '/auth/v1';
+  var SESSION_KEY = 'functionSheetSession';
+  var POLL_MS = 25000;
+
+  var session = null;
+  try { session = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch(e){}
+
+  function configured(){ return !!(CFG.supabaseUrl && CFG.supabaseKey && CFG.staffEmail); }
+
+  function storeSession(s){
+    session = s;
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch(e){}
+  }
+  function dropSession(){
+    session = null;
+    try { localStorage.removeItem(SESSION_KEY); } catch(e){}
+  }
+
+  function authHeaders(){
+    return {
+      'apikey': CFG.supabaseKey,
+      'Authorization': 'Bearer ' + ((session && session.access_token) || CFG.supabaseKey),
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    };
+  }
+
+  function signIn(password){
+    return fetch(AUTH + '/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'apikey': CFG.supabaseKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: CFG.staffEmail, password: password })
+    }).then(function(res){
+      return res.json().catch(function(){ return {}; }).then(function(body){
+        if (!res.ok) throw new Error(body.error_description || body.msg || body.message || 'That password was not accepted.');
+        storeSession(body);
+        return body;
+      });
+    });
+  }
+
+  function refreshSession(){
+    if (!session || !session.refresh_token) return Promise.reject(new Error('no session'));
+    return fetch(AUTH + '/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'apikey': CFG.supabaseKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: session.refresh_token })
+    }).then(function(res){
+      if (!res.ok) throw new Error('session expired');
+      return res.json();
+    }).then(storeSession);
+  }
+
+  // One retry after a silent token refresh: a phone left on the pass for a
+  // few hours comes back with an expired token and should just work.
+  function apiFetch(path, opts){
+    opts = opts || {};
+    var send = function(){
+      return fetch(REST + path, { method: opts.method || 'GET', headers: authHeaders(), body: opts.body });
+    };
+    return send().then(function(res){
+      if (res.status === 401 && session && session.refresh_token){
+        return refreshSession().then(send);
+      }
+      return res;
+    }).then(function(res){
+      if (res.status === 401){ dropSession(); showAuth('Signed out — enter the staff password again.'); throw new Error('signed out'); }
+      if (!res.ok) return res.text().then(function(t){ throw new Error(t ? t.slice(0,120) : ('HTTP ' + res.status)); });
+      if (res.status === 204) return null;
+      return res.text().then(function(t){ return t ? JSON.parse(t) : null; });
+    });
+  }
+
+  function rowToBooking(r){
+    return {
+      id: r.id, date: r.event_date, time: r.event_time || '',
+      area: r.area, pax: r.pax,
+      organiser: r.organiser || '', contact: r.contact || '', takenBy: r.taken_by || '',
+      priority: r.priority || 'Medium', status: r.status || 'Enquiry',
+      depositAmount: r.deposit_amount || '', notes: r.notes || '',
+      hasDJ: !!r.has_dj, hasStage: !!r.has_stage,
+      payments: r.payments || [], refunds: r.refunds || [],
+      createdAt: r.created_at, updatedAt: r.updated_at
+    };
+  }
+  function bookingToRow(b){
+    return {
+      id: b.id, event_date: b.date, event_time: b.time || null,
+      area: b.area, pax: b.pax,
+      organiser: b.organiser || null, contact: b.contact || null, taken_by: b.takenBy || '',
+      priority: b.priority, status: b.status,
+      deposit_amount: b.depositAmount || null, notes: b.notes || null,
+      has_dj: !!b.hasDJ, has_stage: !!b.hasStage,
+      payments: b.payments || [], refunds: b.refunds || [],
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  function loadBookings(){
+    return apiFetch('/bookings?select=*', { method: 'GET', headers: {} }).then(function(rows){
+      state = { bookings: (rows || []).map(rowToBooking) };
+      renderAll();
+      return state;
+    });
+  }
+
+  // Callers already applied their change to `state` optimistically and
+  // re-rendered; this works out what actually differs from the previous
+  // state and sends only those rows. One shape covers add, edit, delete
+  // and the bulk "clear all" from the old-events dialog.
+  function saveState(newState, previousState, onDone){
+    if (!session){ showAuth('Sign in to save changes.'); if (onDone) onDone(false); return; }
+    var prev = {}, next = {};
+    (previousState.bookings || []).forEach(function(b){ prev[b.id] = b; });
+    (newState.bookings || []).forEach(function(b){ next[b.id] = b; });
+
+    var ops = [];
+    Object.keys(next).forEach(function(id){
+      if (!prev[id]){
+        ops.push(apiFetch('/bookings', { method: 'POST', body: JSON.stringify(bookingToRow(next[id])) }));
+      } else if (JSON.stringify(prev[id]) !== JSON.stringify(next[id])){
+        ops.push(apiFetch('/bookings?id=eq.' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify(bookingToRow(next[id])) }));
+      }
+    });
+    Object.keys(prev).forEach(function(id){
+      if (!next[id]) ops.push(apiFetch('/bookings?id=eq.' + encodeURIComponent(id), { method: 'DELETE' }));
+    });
+
+    if (!ops.length){ if (onDone) onDone(true); return; }
+    setSyncing(true);
+    Promise.all(ops).then(function(){
+      setSyncing(false);
+      if (onDone) onDone(true);
+    }).catch(function(err){
+      setSyncing(false);
+      // Nothing was written that we can rely on — put the board back to what
+      // everyone else can still see, so this phone never shows a phantom.
+      state = previousState;
+      renderAll();
+      if (String(err && err.message) !== 'signed out'){
+        showToast('Couldn’t save — check signal and try again.');
+      }
+      if (onDone) onDone(false);
+    });
+  }
+
+  function showToast(msg){
+    var host = document.getElementById('toastHost');
+    var t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    host.appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3600);
+  }
+
+  function setSyncing(on){
+    document.getElementById('syncDot').hidden = !on;
+  }
+
+  // Someone else's booking should turn up without anyone reloading.
+  var polling = false;
+  function startPolling(){
+    if (polling) return;
+    polling = true;
+    setInterval(function(){
+      if (document.hidden) return;
+      if (document.getElementById('bookingDialog').open) return;
+      if (document.getElementById('confirmDialog').open) return;
+      loadBookings().catch(function(){});
+    }, POLL_MS);
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden && session && !document.getElementById('bookingDialog').open){
+        loadBookings().catch(function(){});
+      }
+    });
+  }
+
+  // ---------------- draft persistence across reloads ----------------
+  var DRAFT_KEY = 'functionSheetDraft';
+  function saveDraft(){
+    var draft = collectFormValue();
+    try{
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }catch(e){
+      // Photos push a draft past the per-tab storage quota fast. Keep the
+      // typed fields — which are the part nobody wants to re-enter — and
+      // drop the attachments rather than losing the draft entirely.
+      try{
+        draft.payments = []; draft.refunds = [];
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      }catch(e2){ /* storage unavailable — draft safety net only */ }
+    }
+  }
+  function clearDraft(){
+    try{ sessionStorage.removeItem(DRAFT_KEY); }catch(e){}
+  }
+  function checkDraftOnLoad(){
+    var raw = null;
+    try{ raw = sessionStorage.getItem(DRAFT_KEY); }catch(e){}
+    if (!raw) return;
+    document.getElementById('draftBanner').hidden = false;
+    document.getElementById('draftRestore').onclick = function(){
+      try{
+        var draft = JSON.parse(raw);
+        var target = draft.id ? state.bookings.find(function(b){return b.id===draft.id;}) : null;
+        // The booking this draft was editing may have been deleted by
+        // someone else in the meantime — restore the typing as a new
+        // booking rather than silently resurrecting a deleted record.
+        if (draft.id && !target) draft.id = '';
+        openForm(target || null);
+        applyFormValue(draft);
+      }catch(e){}
+      document.getElementById('draftBanner').hidden = true;
+    };
+    document.getElementById('draftDiscard').onclick = function(){
+      clearDraft();
+      document.getElementById('draftBanner').hidden = true;
+    };
+  }
+
+  // ---------------- stale events (2+ days past, still unresolved) ----------------
+  // Nothing here ever clears itself — this only ever asks. "Stale" means
+  // more than two full days have passed since the event date and nobody
+  // has marked it Completed or Cancelled yet.
+  function staleBookings(){
+    return state.bookings.filter(function(b){
+      return daysUntil(b.date) <= -2 && b.status !== 'Cancelled' && b.status !== 'Completed';
+    }).sort(function(a,b){ return a.date.localeCompare(b.date); });
+  }
+
+  function renderStaleList(){
+    var stale = staleBookings();
+    document.getElementById('staleList').innerHTML = stale.map(function(b){
+      var title = b.organiser ? escapeHtml(b.organiser) : escapeHtml(b.area) + ' booking';
+      return '<div class="stale-row" data-id="'+b.id+'">'+
+        '<div class="stale-info"><b>'+title+'</b><span>'+fmtDateLong(b.date)+' · '+escapeHtml(b.area)+'</span></div>'+
+        '<div class="stale-actions write-only">'+
+          '<button type="button" class="btn" data-reschedule="'+b.id+'">Reschedule</button>'+
+          '<button type="button" class="btn danger" data-clearstale="'+b.id+'">Clear</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    document.getElementById('staleIntroCount').textContent = stale.length;
+    document.getElementById('staleBannerCount').textContent = stale.length;
+    document.getElementById('staleBanner').hidden = !stale.length;
+    return stale;
+  }
+
+  function clearStaleIds(ids){
+    if (!ids.length) return;
+    var newBookings = state.bookings.filter(function(b){ return ids.indexOf(b.id) === -1; });
+    var newState = {bookings:newBookings};
+    var previousState = state;
+    state = newState;
+    renderAll();
+    var remaining = renderStaleList();
+    if (!remaining.length) document.getElementById('staleDialog').close();
+    saveState(newState, previousState, function(){});
+  }
+
+  // Shown once automatically per fresh load (if anything qualifies), and
+  // reopenable any time via the "Review" banner it leaves behind.
+  function checkStaleEvents(){
+    var stale = renderStaleList();
+    if (stale.length) document.getElementById('staleDialog').showModal();
+  }
+
+  // ---------------- form handling ----------------
+  var draftPayments = [];
+  var draftRefunds = [];
+  var pendingFileTarget = null;
+
+  // Restaurant bookings (a table, not a buyout) never need a deposit —
+  // "Beer Garden + Restaurant" is a bigger event booking and still does.
+  function areaNeedsDeposit(area){ return area !== 'Restaurant'; }
+
+  function updateDepositVisibility(){
+    var needsDeposit = areaNeedsDeposit(document.getElementById('f-area').value);
+    document.getElementById('depositGroup').hidden = !needsDeposit;
+    document.getElementById('depositNote').hidden = needsDeposit;
+  }
+
+  // Whoever took the last booking on THIS phone is almost always whoever is
+  // taking the next one, so the name is remembered per device (never shared
+  // in the board itself) and pre-filled for new bookings only.
+  var TAKEN_BY_KEY = 'functionSheetTakenBy';
+  function rememberTakenBy(name){
+    try{ localStorage.setItem(TAKEN_BY_KEY, name); }catch(e){}
+  }
+  function lastTakenBy(){
+    try{ return localStorage.getItem(TAKEN_BY_KEY) || ''; }catch(e){ return ''; }
+  }
+
+  function clearFieldErrors(){
+    ['f-date-field','f-area-field','f-pax-field','f-taken-field'].forEach(function(id){
+      document.getElementById(id).classList.remove('invalid');
+    });
+  }
+
+  function resetForm(){
+    document.getElementById('bookingForm').reset();
+    document.getElementById('f-id').value = '';
+    draftPayments = []; draftRefunds = [];
+    renderDraftFiles();
+    clearFieldErrors();
+    document.getElementById('sizeBudget').textContent = '';
+    updateSizePreview();
+    updateDepositVisibility();
+  }
+
+  function openForm(booking){
+    resetForm();
+    document.getElementById('formTitle').textContent = booking ? 'Edit booking' : 'New booking';
+    if (booking){
+      document.getElementById('f-id').value = booking.id;
+      document.getElementById('f-date').value = safeStr(booking.date, '');
+      document.getElementById('f-time').value = safeStr(booking.time, '');
+      document.getElementById('f-area').value = safeStr(booking.area, '');
+      document.getElementById('f-pax').value = booking.pax != null ? booking.pax : '';
+      document.getElementById('f-priority').value = priorityOf(booking);
+      document.getElementById('f-dj').checked = !!booking.hasDJ;
+      document.getElementById('f-stage').checked = !!booking.hasStage;
+      document.getElementById('f-organiser').value = booking.organiser || '';
+      document.getElementById('f-contact').value = booking.contact || '';
+      document.getElementById('f-taken').value = booking.takenBy || lastTakenBy();
+      document.getElementById('f-status').value = safeStr(booking.status, 'Enquiry');
+      document.getElementById('f-deposit').value = booking.depositAmount || '';
+      document.getElementById('f-notes').value = booking.notes || '';
+      draftPayments = (booking.payments||[]).slice();
+      draftRefunds = (booking.refunds||[]).slice();
+      renderDraftFiles();
+    } else {
+      document.getElementById('f-taken').value = lastTakenBy();
+    }
+    updateSizePreview();
+    updateDepositVisibility();
+    document.getElementById('bookingDialog').showModal();
+  }
+
+  function collectFormValue(){
+    return {
+      id: document.getElementById('f-id').value,
+      date: document.getElementById('f-date').value,
+      time: document.getElementById('f-time').value,
+      area: document.getElementById('f-area').value,
+      pax: document.getElementById('f-pax').value,
+      priority: document.getElementById('f-priority').value,
+      hasDJ: document.getElementById('f-dj').checked,
+      hasStage: document.getElementById('f-stage').checked,
+      organiser: document.getElementById('f-organiser').value,
+      contact: document.getElementById('f-contact').value,
+      takenBy: document.getElementById('f-taken').value,
+      status: document.getElementById('f-status').value,
+      depositAmount: document.getElementById('f-deposit').value,
+      notes: document.getElementById('f-notes').value,
+      payments: draftPayments,
+      refunds: draftRefunds
+    };
+  }
+  function applyFormValue(v){
+    document.getElementById('f-id').value = v.id || '';
+    document.getElementById('f-date').value = v.date || '';
+    document.getElementById('f-time').value = v.time || '';
+    document.getElementById('f-area').value = v.area || '';
+    document.getElementById('f-pax').value = v.pax || '';
+    document.getElementById('f-priority').value = v.priority || 'Medium';
+    document.getElementById('f-dj').checked = !!v.hasDJ;
+    document.getElementById('f-stage').checked = !!v.hasStage;
+    document.getElementById('f-organiser').value = v.organiser || '';
+    document.getElementById('f-contact').value = v.contact || '';
+    document.getElementById('f-taken').value = v.takenBy || lastTakenBy();
+    document.getElementById('f-status').value = v.status || 'Enquiry';
+    document.getElementById('f-deposit').value = v.depositAmount || '';
+    document.getElementById('f-notes').value = v.notes || '';
+    draftPayments = v.payments || []; draftRefunds = v.refunds || [];
+    renderDraftFiles();
+    updateSizePreview();
+    updateDepositVisibility();
+  }
+
+  function updateSizePreview(){
+    var pax = parseInt(document.getElementById('f-pax').value, 10);
+    var el = document.getElementById('sizePreview');
+    if (!pax || pax < 1){ el.innerHTML = ''; return; }
+    var band = sizeBand(pax);
+    el.innerHTML = '<span class="pill size-chip" style="background:'+band.bg+';color:'+band.fg+'">'+band.label+'</span>';
+  }
+
+  function renderDraftFiles(){
+    var pHost = document.getElementById('paymentFiles');
+    var rHost = document.getElementById('refundFiles');
+    function block(list){
+      return list.map(function(f){
+        var inner = f.type==='application/pdf' ? '<div class="pdf">PDF</div>' : '<img src="'+f.dataUrl+'" alt="">';
+        return '<div class="draftfile" data-file="'+f.id+'">'+inner+'<button type="button" class="rm" data-rm="'+f.id+'">✕</button></div>';
+      }).join('');
+    }
+    pHost.innerHTML = block(draftPayments);
+    rHost.innerHTML = block(draftRefunds);
+  }
+
+  function readFileCompressed(file){
+    return new Promise(function(resolve, reject){
+      if (file.type === 'application/pdf'){
+        var r = new FileReader();
+        r.onload = function(){ resolve({dataUrl:r.result, type:'application/pdf'}); };
+        r.onerror = reject;
+        r.readAsDataURL(file);
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(){
+        var img = new Image();
+        img.onload = function(){
+          var maxDim = 1000;
+          var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(img.width*scale));
+          canvas.height = Math.max(1, Math.round(img.height*scale));
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve({dataUrl: canvas.toDataURL('image/jpeg', 0.72), type:'image/jpeg'});
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function currentBudgetBytes(extra){
+    var bytes = new Blob([JSON.stringify(state)]).size + (extra||0);
+    draftPayments.concat(draftRefunds).forEach(function(f){ bytes += (f.dataUrl||'').length; });
+    return bytes;
+  }
+
+  // ---------------- events ----------------
+  document.addEventListener('DOMContentLoaded', function(){
+    wireAuth();
+    boot();
+
+    document.getElementById('staleReview').addEventListener('click', function(){
+      renderStaleList();
+      document.getElementById('staleDialog').showModal();
+    });
+    document.getElementById('staleClose').addEventListener('click', function(){ document.getElementById('staleDialog').close(); });
+    document.getElementById('staleNotNow').addEventListener('click', function(){ document.getElementById('staleDialog').close(); });
+    document.getElementById('staleClearAll').addEventListener('click', function(){
+      clearStaleIds(staleBookings().map(function(b){ return b.id; }));
+    });
+    document.getElementById('staleList').addEventListener('click', function(e){
+      var resBtn = e.target.closest('[data-reschedule]');
+      if (resBtn){
+        var b = state.bookings.find(function(x){return x.id===resBtn.getAttribute('data-reschedule');});
+        document.getElementById('staleDialog').close();
+        if (b) openForm(b);
+        return;
+      }
+      var clrBtn = e.target.closest('[data-clearstale]');
+      if (clrBtn) clearStaleIds([clrBtn.getAttribute('data-clearstale')]);
+    });
+
+    document.getElementById('tabs').addEventListener('click', function(e){
+      var btn = e.target.closest('.tab'); if (!btn) return;
+      view.tab = btn.getAttribute('data-tab');
+      renderAll();
+    });
+    document.getElementById('tabs').addEventListener('scroll', updateTabMask, {passive:true});
+    window.addEventListener('resize', updateTabMask);
+    document.getElementById('areaChips').addEventListener('click', function(e){
+      var btn = e.target.closest('.chip'); if (!btn) return;
+      var a = btn.getAttribute('data-area');
+      var i = view.areas.indexOf(a);
+      if (i===-1) view.areas.push(a); else view.areas.splice(i,1);
+      renderAreaChips(); renderList();
+    });
+    document.getElementById('search').addEventListener('input', function(e){
+      view.search = e.target.value; renderList();
+    });
+
+    document.getElementById('list').addEventListener('click', function(e){
+      var thumb = e.target.closest('[data-file]');
+      if (thumb){
+        var id = thumb.getAttribute('data-file');
+        var b = state.bookings.find(function(bk){ return bk.id === thumb.closest('.card').getAttribute('data-id'); });
+        var f = b && (b.payments||[]).concat(b.refunds||[]).find(function(x){return x.id===id;});
+        if (f) openLightbox(f);
+        return;
+      }
+      var editBtn = e.target.closest('[data-edit]');
+      if (editBtn){
+        var eb = state.bookings.find(function(b){return b.id===editBtn.getAttribute('data-edit');});
+        if (eb) openForm(eb);
+        return;
+      }
+      var delBtn = e.target.closest('[data-delete]');
+      if (delBtn){
+        confirmDelete(delBtn.getAttribute('data-delete'));
+        return;
+      }
+      var head = e.target.closest('[data-toggle]');
+      if (head){
+        var id2 = head.getAttribute('data-toggle');
+        openCardId = openCardId === id2 ? null : id2;
+        renderList();
+      }
+    });
+
+    document.getElementById('fabNew').addEventListener('click', function(){ openForm(null); });
+    document.getElementById('formClose').addEventListener('click', closeForm);
+    document.getElementById('formCancel').addEventListener('click', closeForm);
+    document.getElementById('bookingDialog').addEventListener('cancel', function(){ clearDraft(); });
+
+    document.getElementById('f-pax').addEventListener('input', function(){ updateSizePreview(); saveDraft(); });
+    document.getElementById('f-area').addEventListener('change', updateDepositVisibility);
+    ['f-date','f-time','f-area','f-dj','f-stage','f-organiser','f-contact','f-taken','f-status','f-deposit','f-notes','f-priority'].forEach(function(id){
+      document.getElementById(id).addEventListener('input', saveDraft);
+      document.getElementById(id).addEventListener('change', saveDraft);
+    });
+    // Clear a field's red state as soon as it's filled in.
+    [['f-date','f-date-field'],['f-area','f-area-field'],['f-pax','f-pax-field'],['f-taken','f-taken-field']].forEach(function(pair){
+      document.getElementById(pair[0]).addEventListener('input', function(e){
+        if (e.target.value.trim()) document.getElementById(pair[1]).classList.remove('invalid');
+      });
+      document.getElementById(pair[0]).addEventListener('change', function(e){
+        if (e.target.value.trim()) document.getElementById(pair[1]).classList.remove('invalid');
+      });
+    });
+
+    // The day-turnover watch: cheap poll plus a check whenever the tab is
+    // brought back to the front (phones freeze timers in the background).
+    setInterval(refreshIfDayChanged, 60000);
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden) refreshIfDayChanged();
+    });
+    window.addEventListener('focus', refreshIfDayChanged);
+
+    // Thumbnails inside the form open the same viewer the card ones do.
+    ['paymentFiles','refundFiles'].forEach(function(hostId){
+      document.getElementById(hostId).addEventListener('click', function(e){
+        if (e.target.closest('[data-rm]')) return;
+        var thumb = e.target.closest('[data-file]');
+        if (!thumb) return;
+        var id = thumb.getAttribute('data-file');
+        var f = draftPayments.concat(draftRefunds).find(function(x){ return x.id === id; });
+        if (f) openLightbox(f);
+      });
+    });
+
+    document.getElementById('addPaymentFile').addEventListener('click', function(){ pendingFileTarget='payments'; document.getElementById('fileInput').click(); });
+    document.getElementById('addRefundFile').addEventListener('click', function(){ pendingFileTarget='refunds'; document.getElementById('fileInput').click(); });
+    document.getElementById('fileInput').addEventListener('change', function(e){
+      var file = e.target.files[0];
+      e.target.value = '';
+      if (!file || !pendingFileTarget) return;
+      readFileCompressed(file).then(function(res){
+        var projected = currentBudgetBytes(res.dataUrl.length);
+        if (projected > MAX_ATTACH_MB*1024*1024){
+          showToast('That would push this board over its ' + MAX_ATTACH_MB + ' MB attachment budget — remove an older file first.');
+          return;
+        }
+        var entry = {id:uid(), dataUrl:res.dataUrl, type:res.type, name:file.name, addedAt:new Date().toISOString()};
+        (pendingFileTarget==='payments' ? draftPayments : draftRefunds).push(entry);
+        renderDraftFiles();
+        document.getElementById('sizeBudget').textContent =
+          'Attachments in this form: ~' + ((currentBudgetBytes(0)-new Blob([JSON.stringify(state)]).size)/1024).toFixed(0) + ' KB';
+        saveDraft();
+      }).catch(function(){ showToast('Could not read that file.'); });
+    });
+
+    document.body.addEventListener('click', function(e){
+      var rm = e.target.closest('[data-rm]');
+      if (!rm) return;
+      var id = rm.getAttribute('data-rm');
+      draftPayments = draftPayments.filter(function(f){return f.id!==id;});
+      draftRefunds = draftRefunds.filter(function(f){return f.id!==id;});
+      renderDraftFiles(); saveDraft();
+    });
+
+    document.getElementById('bookingForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var dateEl = document.getElementById('f-date');
+      var areaEl = document.getElementById('f-area');
+      var paxEl = document.getElementById('f-pax');
+      var takenEl = document.getElementById('f-taken');
+      var ok = true;
+      var paxNum = parseInt(paxEl.value, 10);
+      var firstBad = null;
+      [['f-date-field', !dateEl.value, dateEl],
+       ['f-area-field', !areaEl.value, areaEl],
+       ['f-pax-field', !(paxNum >= 1), paxEl],
+       ['f-taken-field', !takenEl.value.trim(), takenEl]].forEach(function(row){
+        var field = document.getElementById(row[0]);
+        field.classList.toggle('invalid', row[1]);
+        if (row[1]){ ok = false; if (!firstBad) firstBad = row[2]; }
+      });
+      if (!ok){
+        // Point the person at the first thing that's missing rather than
+        // leaving them to hunt for the red box in a long form.
+        if (firstBad){
+          firstBad.scrollIntoView({block:'center', behavior:'smooth'});
+          try{ firstBad.focus({preventScroll:true}); }catch(e){ firstBad.focus(); }
+        }
+        return;
+      }
+
+      var id = document.getElementById('f-id').value || uid();
+      var existing = state.bookings.find(function(b){return b.id===id;});
+      var needsDeposit = areaNeedsDeposit(areaEl.value);
+      var booking = {
+        id: id,
+        createdAt: existing ? existing.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        date: dateEl.value,
+        time: document.getElementById('f-time').value,
+        area: areaEl.value,
+        pax: parseInt(paxEl.value,10),
+        hasDJ: document.getElementById('f-dj').checked,
+        hasStage: document.getElementById('f-stage').checked,
+        organiser: document.getElementById('f-organiser').value.trim(),
+        contact: document.getElementById('f-contact').value.trim(),
+        takenBy: takenEl.value.trim(),
+        priority: document.getElementById('f-priority').value,
+        status: document.getElementById('f-status').value,
+        // Restaurant bookings don't take a deposit — never save one behind
+        // the hidden fields even if they held a value from before the area
+        // was switched.
+        depositAmount: needsDeposit ? document.getElementById('f-deposit').value.trim() : '',
+        notes: document.getElementById('f-notes').value.trim(),
+        payments: needsDeposit ? draftPayments : [],
+        refunds: needsDeposit ? draftRefunds : []
+      };
+
+      var newBookings = state.bookings.slice();
+      var idx = newBookings.findIndex(function(b){return b.id===id;});
+      if (idx===-1) newBookings.push(booking); else newBookings[idx] = booking;
+      var newState = {bookings:newBookings};
+      var previousState = state;
+
+      var saveBtn = document.getElementById('formSave');
+      saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
+      rememberTakenBy(booking.takenBy);
+      clearDraft();
+      state = newState;
+      closeFormSilent();
+      renderAll();
+      // A successful publish reloads this whole view, which resets the
+      // button along with everything else. This reset only has to fire on
+      // a rejection — but a timeout fallback is cheap insurance against the
+      // rare case where a reload doesn't arrive and the button is left
+      // stuck on "Saving…".
+      var resetBtn = function(){ saveBtn.disabled=false; saveBtn.textContent='Save booking'; };
+      var resetTimer = setTimeout(resetBtn, 6000);
+      saveState(newState, previousState, function(){ clearTimeout(resetTimer); resetBtn(); });
+    });
+
+    document.getElementById('confirmNo').addEventListener('click', function(){ document.getElementById('confirmDialog').close(); });
+    document.getElementById('lightbox').addEventListener('click', function(e){
+      if (e.target.id === 'lightbox' || e.target.closest('.lbclose')) document.getElementById('lightbox').close();
+    });
+  });
+
+  function closeForm(){ clearDraft(); document.getElementById('bookingDialog').close(); }
+  function closeFormSilent(){ document.getElementById('bookingDialog').close(); }
+
+  function confirmDelete(id){
+    var b = state.bookings.find(function(x){return x.id===id;});
+    if (!b) return;
+    document.getElementById('confirmTitle').textContent = 'Delete this booking?';
+    document.getElementById('confirmBody').textContent =
+      (b.organiser || b.area) + ' — ' + fmtDateLong(b.date) + '. This can’t be undone.';
+    var dlg = document.getElementById('confirmDialog');
+    dlg.showModal();
+    document.getElementById('confirmYes').onclick = function(){
+      var newBookings = state.bookings.filter(function(x){return x.id!==id;});
+      var newState = {bookings:newBookings};
+      var previousState = state;
+      state = newState;
+      dlg.close();
+      renderAll();
+      saveState(newState, previousState, function(){});
+    };
+  }
+
+  function openLightbox(f){
+    var wrap = document.getElementById('lbWrap');
+    wrap.innerHTML = '<button class="lbclose" type="button">✕</button>' +
+      (f.type==='application/pdf'
+        ? '<iframe src="'+f.dataUrl+'"></iframe>'
+        : '<img src="'+f.dataUrl+'" alt="">');
+    document.getElementById('lightbox').showModal();
+  }
+
+
+  // ---------------- sign in / boot ----------------
+  function showAuth(message){
+    var gate = document.getElementById('authGate');
+    gate.hidden = false;
+    document.getElementById('authError').textContent = message || '';
+    document.getElementById('authError').hidden = !message;
+    setTimeout(function(){ try{ document.getElementById('authPassword').focus(); }catch(e){} }, 60);
+  }
+  function hideAuth(){
+    document.getElementById('authGate').hidden = true;
+    document.getElementById('authPassword').value = '';
+  }
+
+  function showSetupNeeded(){
+    var gate = document.getElementById('authGate');
+    gate.hidden = false;
+    document.getElementById('authForm').hidden = true;
+    document.getElementById('authSetup').hidden = false;
+  }
+
+  function wireAuth(){
+    document.getElementById('authForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      var btn = document.getElementById('authSubmit');
+      var pw = document.getElementById('authPassword').value;
+      if (!pw) return;
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      signIn(pw).then(function(){
+        hideAuth();
+        return loadBookings();
+      }).then(function(){
+        checkDraftOnLoad();
+        checkStaleEvents();
+        startPolling();
+      }).catch(function(err){
+        showAuth(err && err.message ? err.message : 'Could not sign in.');
+      }).then(function(){
+        btn.disabled = false; btn.textContent = 'Open the sheet';
+      });
+    });
+    document.getElementById('signOut').addEventListener('click', function(){
+      dropSession();
+      state = { bookings: [] };
+      renderAll();
+      showAuth('Signed out.');
+    });
+  }
+
+  function boot(){
+    renderAll();
+    // Lets a phone's password manager store the shared staff password
+    // against a username, and quiets the browser's accessibility warning.
+    document.getElementById('authUser').value = CFG.staffEmail || 'staff';
+    if (!configured()){ showSetupNeeded(); return; }
+    if (!session){ showAuth(); return; }
+    hideAuth();
+    loadBookings().then(function(){
+      checkDraftOnLoad();
+      checkStaleEvents();
+      startPolling();
+    }).catch(function(err){
+      if (String(err && err.message) !== 'signed out') showAuth('Enter the staff password to open the sheet.');
+    });
+  }
+})();
+</script>
