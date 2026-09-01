@@ -85,6 +85,62 @@ the same thing and is equally safe.)
 
 ---
 
+## Security
+
+**The key in `config.js` is meant to be public.** Supabase calls it the
+publishable (or "anon") key, and it is designed to be shipped to a browser.
+Anyone can press Inspect and read it — that is expected, and on its own it can
+read and write nothing. What stops it is Row Level Security in `schema.sql`:
+the `bookings` table only answers a request carrying a signed-in staff token,
+which only the password box on the front produces. The key without the
+password is a doorknob with no door behind it.
+
+The key that must **never** go in this repo is the `service_role` / secret one.
+That one does bypass RLS.
+
+**What actually protects the data is the one shared password.** It is the whole
+lock. So:
+
+- Change it whenever someone leaves — Supabase → Authentication → Users → the
+  staff user → reset password. Everyone re-enters it once.
+- Don't post it anywhere it outlives the person: a pinned WhatsApp message
+  stays readable to anyone still in the group.
+- Anyone with the link and the password can see every customer name, phone
+  number and deposit receipt, and can delete bookings.
+
+**What the page itself does:**
+
+- A Content Security Policy in the page head. If anything ever did smuggle
+  markup into the board, this stops it loading outside scripts or sending
+  anything to a server that isn't Supabase — so a stolen session can't be
+  quietly shipped somewhere.
+- Attachments are checked, not trusted. Nothing reaches the page unless it
+  still looks exactly like a photo or PDF this board produced, so a row edited
+  outside the app can't plant something that runs on everyone else's phone.
+  A PDF is verified by its actual first bytes, not by its name.
+- Everything typed into a booking is escaped when it is drawn, so a name or
+  note containing HTML shows as text.
+
+**What it deliberately doesn't do**, and why:
+
+- *Clickjacking protection* (`frame-ancestors` / `X-Frame-Options`) needs a real
+  HTTP header. GitHub Pages doesn't let us send headers, so it can't be set
+  from a static page.
+- *Account lockout after failed logins* would let anyone lock the whole team
+  out, since there is only one shared account. Supabase already rate-limits
+  sign-in attempts, which is the safer trade here.
+- *CSRF tokens* aren't needed. The session is a token sent in a header, not a
+  cookie, so another site can't make the browser send it along.
+
+**A phone stays signed in until someone taps "Sign out of this phone."** If a
+phone is lost, change the password — that is what cuts every device off.
+
+**The data is personal information.** Customer names, phone numbers and payment
+records belong to those customers. Keep exports off personal devices, and delete
+old bookings you no longer need.
+
+---
+
 ## Things worth knowing
 
 **The password is the only lock.** Anyone with the link and the password can see

@@ -1,4 +1,16 @@
 <meta charset="utf-8">
+<!-- A second line of defence, not the first. If a booking note or an
+     attachment ever did smuggle markup into the page, this stops it doing
+     the damage that matters: no script from anywhere but this page, no
+     plugins, no sending data off to some other server, no rewriting where
+     relative links point. connect-src is the important one — it means a
+     stolen session can only ever talk back to Supabase, never to an
+     attacker's collection endpoint. (frame-ancestors, which would stop this
+     page being framed by someone else's site, only works as a real HTTP
+     header, so it can't be set here — GitHub Pages doesn't let us send
+     headers.) -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-src data:; connect-src 'self' https://*.supabase.co; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F4925">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -410,6 +422,10 @@
   #lightbox .dialog-inner{ padding:0; max-height:88vh; }
   #lightbox img{ max-width:92vw; max-height:88vh; display:block; border-radius:10px; }
   #lightbox iframe{ width:88vw; height:80vh; border:none; border-radius:10px; background:#fff; }
+  #lightbox .lb-bad{
+    color:#F4F1E2; background:rgba(0,0,0,.55); border-radius:10px;
+    padding:18px; font-size:13.5px; line-height:1.5; margin:0; max-width:340px;
+  }
   #lightbox .lbclose{
     position:absolute; top:-14px; right:-14px; width:34px; height:34px; border-radius:999px; border:none;
     background:var(--surface); color:var(--ink); font-size:16px; cursor:pointer; box-shadow:var(--shadow);
@@ -1012,12 +1028,31 @@
     }).join('');
   }
 
+  // ---------------- attachment safety ----------------
+  // Attachments are the only free-form thing that ends up back in the page,
+  // and the board trusts whatever JSON is in the payments/refunds columns —
+  // which anyone holding the staff password could write straight over the
+  // REST API, not just through this form. So nothing is put in the DOM
+  // unless it still looks exactly like the compressed image or PDF this app
+  // produces: a data: URL, one of four types, base64 and nothing else.
+  // A crafted value can then neither break out of the src attribute nor
+  // smuggle a different content type past the check.
+  var SAFE_DATA_URL = /^data:(image\/(?:png|jpeg|gif|webp)|application\/pdf);base64,[A-Za-z0-9+/]*={0,2}$/;
+  function safeDataUrl(f){
+    if (!f) return '';
+    var u = String(f.dataUrl == null ? '' : f.dataUrl);
+    return SAFE_DATA_URL.test(u) ? u : '';
+  }
+  function isPdf(f){ return f && f.type === 'application/pdf'; }
+
   function fileThumb(f, cls){
     if (!f) return '';
-    if (f.type === 'application/pdf'){
-      return '<div class="'+cls+'" data-file="'+f.id+'"><div class="pdf">PDF</div></div>';
-    }
-    return '<div class="'+cls+'" data-file="'+f.id+'"><img src="'+f.dataUrl+'" alt=""></div>';
+    var box = '<div class="'+escapeHtml(cls)+'" data-file="'+escapeHtml(f.id)+'">';
+    if (isPdf(f)) return box+'<div class="pdf">PDF</div></div>';
+    var url = safeDataUrl(f);
+    // Not a picture this app made — show the slot, never the payload.
+    if (!url) return box+'<div class="pdf">?</div></div>';
+    return box+'<img src="'+escapeHtml(url)+'" alt=""></div>';
   }
 
   function renderList(){
@@ -1674,21 +1709,44 @@
     var rHost = document.getElementById('refundFiles');
     function block(list){
       return list.map(function(f){
-        var inner = f.type==='application/pdf' ? '<div class="pdf">PDF</div>' : '<img src="'+f.dataUrl+'" alt="">';
-        return '<div class="draftfile" data-file="'+f.id+'">'+inner+'<button type="button" class="rm" data-rm="'+f.id+'">✕</button></div>';
+        var url = safeDataUrl(f);
+        var inner = isPdf(f) ? '<div class="pdf">PDF</div>'
+                  : (url ? '<img src="'+escapeHtml(url)+'" alt="">' : '<div class="pdf">?</div>');
+        return '<div class="draftfile" data-file="'+escapeHtml(f.id)+'">'+inner+
+               '<button type="button" class="rm" data-rm="'+escapeHtml(f.id)+'">✕</button></div>';
       }).join('');
     }
     pHost.innerHTML = block(draftPayments);
     rHost.innerHTML = block(draftRefunds);
   }
 
+  // The file input's accept="" is only a hint to the picker — anyone can
+  // hand the form something else. A PDF is therefore taken on its actual
+  // first bytes rather than on the type the browser reports, and an image
+  // has to genuinely decode as one (it is then re-encoded to JPEG below,
+  // which drops anything that was riding along inside the original file).
+  function looksLikePdf(file){
+    return file.slice(0, 5).arrayBuffer().then(function(buf){
+      var b = new Uint8Array(buf);
+      return b.length === 5 && b[0]===0x25 && b[1]===0x50 && b[2]===0x44 && b[3]===0x46 && b[4]===0x2D; // %PDF-
+    }).catch(function(){ return false; });
+  }
+
   function readFileCompressed(file){
     return new Promise(function(resolve, reject){
-      if (file.type === 'application/pdf'){
-        var r = new FileReader();
-        r.onload = function(){ resolve({dataUrl:r.result, type:'application/pdf'}); };
-        r.onerror = reject;
-        r.readAsDataURL(file);
+      var claimsPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
+      if (claimsPdf){
+        looksLikePdf(file).then(function(real){
+          if (!real) return reject(new Error('not a pdf'));
+          var r = new FileReader();
+          r.onload = function(){ resolve({dataUrl:r.result, type:'application/pdf'}); };
+          r.onerror = reject;
+          r.readAsDataURL(file);
+        });
+        return;
+      }
+      if (file.type && file.type.indexOf('image/') !== 0){
+        reject(new Error('not an image'));
         return;
       }
       var reader = new FileReader();
@@ -1861,7 +1919,12 @@
         document.getElementById('sizeBudget').textContent =
           'Attachments in this form: ~' + ((currentBudgetBytes(0)-new Blob([JSON.stringify(state)]).size)/1024).toFixed(0) + ' KB';
         saveDraft();
-      }).catch(function(){ showToast('Could not read that file.'); });
+      }).catch(function(err){
+        var why = String((err && err.message) || '');
+        showToast(why === 'not a pdf' || why === 'not an image'
+          ? 'Only photos and PDFs can be attached.'
+          : 'Could not read that file.');
+      });
     });
 
     document.body.addEventListener('click', function(e){
@@ -1984,10 +2047,18 @@
 
   function openLightbox(f){
     var wrap = document.getElementById('lbWrap');
-    wrap.innerHTML = '<button class="lbclose" type="button">✕</button>' +
-      (f.type==='application/pdf'
-        ? '<iframe src="'+f.dataUrl+'"></iframe>'
-        : '<img src="'+f.dataUrl+'" alt="">');
+    var url = safeDataUrl(f);
+    var body;
+    if (!url){
+      body = '<p class="lb-bad">This attachment isn\u2019t a picture or PDF this board made, so it hasn\u2019t been opened.</p>';
+    } else if (isPdf(f)){
+      // The URL has been checked to start data:application/pdf;base64, so
+      // the frame cannot be handed markup dressed up as a receipt.
+      body = '<iframe src="'+escapeHtml(url)+'"></iframe>';
+    } else {
+      body = '<img src="'+escapeHtml(url)+'" alt="">';
+    }
+    wrap.innerHTML = '<button class="lbclose" type="button">✕</button>' + body;
     document.getElementById('lightbox').showModal();
   }
 
