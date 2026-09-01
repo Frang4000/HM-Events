@@ -172,16 +172,11 @@
 
   /* ---------- controls ---------- */
   .controls{ padding:0 14px 10px; }
-  /* The tab strip scrolls on a narrow phone; the mask fades the last tab
-     out at the edge so it's obvious there's more to the right. */
+  /* The tabs wrap onto a second line rather than scrolling sideways —
+     "Past" used to sit off the right edge of a phone where nobody found it. */
   .tabs{
-    display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-    -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
-    mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent);
+    display:flex; flex-wrap:wrap; gap:6px; padding-bottom:8px;
   }
-  .tabs.no-mask{ -webkit-mask-image:none; mask-image:none; }
-  .tabs::-webkit-scrollbar{display:none;}
   .tab{
     flex:none; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
     padding:8px 13px; border-radius:999px; font-size:13px; font-weight:600; cursor:pointer;
@@ -469,9 +464,13 @@
 
 
   /* ---------- sign in ---------- */
-  .visually-hidden{
-    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
-    overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+  /* Also named with the input selector, because ".auth-card input" is more
+     specific and was overriding the width — leaving this "hidden" field a
+     full screen wide and pushing the sign-in screen sideways. */
+  .visually-hidden,
+  .auth-card input.visually-hidden{
+    position:absolute; width:1px; height:1px; min-height:0; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0;
   }
   .auth-gate{
     position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
@@ -1003,15 +1002,6 @@
       var active = view.tab === t[0] ? ' active' : '';
       return '<button class="tab'+active+'" data-tab="'+t[0]+'">'+t[1]+' <span class="n">'+counts[t[0]]+'</span></button>';
     }).join('');
-    updateTabMask();
-  }
-
-  // Fade the right edge only while there is actually more tab strip to
-  // scroll to, so nothing looks clipped on a wide screen.
-  function updateTabMask(){
-    var el = document.getElementById('tabs');
-    var more = el.scrollWidth - el.clientWidth - el.scrollLeft > 4;
-    el.classList.toggle('no-mask', !more);
   }
 
   function renderAreaChips(){
@@ -1807,8 +1797,6 @@
       view.tab = btn.getAttribute('data-tab');
       renderAll();
     });
-    document.getElementById('tabs').addEventListener('scroll', updateTabMask, {passive:true});
-    window.addEventListener('resize', updateTabMask);
     document.getElementById('areaChips').addEventListener('click', function(e){
       var btn = e.target.closest('.chip'); if (!btn) return;
       var a = btn.getAttribute('data-area');
