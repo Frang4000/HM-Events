@@ -365,7 +365,7 @@
     padding:10px 12px; margin:0 0 13px;
   }
   #depositGroup[hidden], #depositFields[hidden], #noDepositField[hidden],
-  .deposit-note[hidden]{ display:none; }
+  #tableField[hidden], .deposit-note[hidden]{ display:none; }
   /* The tick is unusable until the database has the column for it. */
   .checkopt input:disabled{ cursor:not-allowed; }
   .checkopt.off{ opacity:.55; cursor:not-allowed; }
@@ -622,16 +622,15 @@
         <div class="error">Put your name down — every booking needs one.</div>
       </div>
 
+      <div class="field" id="tableField" hidden>
+        <label for="f-table">Table preference <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+        <input type="text" id="f-table" placeholder="e.g. Table 12, or the square room">
+        <p class="deposit-note" id="tableUnavailable" hidden>This needs a one-line database update — see “Adding the newer fields” in the README.</p>
+      </div>
+
       <div class="field">
         <label for="f-status">Status</label>
-        <select id="f-status">
-          <option>Enquiry</option>
-          <option>Confirmed</option>
-          <option>Deposit Paid</option>
-          <option>Deposit Refunded</option>
-          <option>Completed</option>
-          <option>Cancelled</option>
-        </select>
+        <select id="f-status"></select>
       </div>
 
       <div class="field">
@@ -763,6 +762,10 @@
 
   var AREAS = ["Front Bar","Back Bar","Whole Venue","Restaurant","Beer Garden + Restaurant"];
   var PRIORITY_ORDER = {Urgent:0, High:1, Medium:2, Low:3};
+  var STATUSES = ['Enquiry','Confirmed','Deposit Paid','Deposit Refunded','Completed','Cancelled'];
+  // Meaningless on a booking that isn't taking a deposit, so they come out
+  // of the list rather than sitting there inviting a wrong pick.
+  var DEPOSIT_STATUSES = ['Deposit Paid','Deposit Refunded'];
   var SIZE_BANDS = [
     {key:"small",  label:"Small",       max:20,       bg:"#CFEBE7", fg:"#123B37"},
     {key:"medium", label:"Medium",      max:60,       bg:"#7BC4BC", fg:"#0C2E2A"},
@@ -1068,6 +1071,7 @@
         '<div><div class="k">Pax</div><div class="v num">'+escapeHtml(b.pax)+' — '+band.label+'</div></div>'+
         '<div><div class="k">Deposit</div><div class="v">'+(needsDeposit ? (b.depositAmount?escapeHtml(b.depositAmount):'—') : 'Not required')+'</div></div>'+
         '<div><div class="k">Priority</div><div class="v">'+priority+'</div></div>'+
+        (b.tablePref ? '<div class="detail-full"><div class="k">Table</div><div class="v">'+escapeHtml(b.tablePref)+'</div></div>' : '')+
         (b.contact ? '<div class="detail-full"><div class="k">Contact</div><div class="v">'+escapeHtml(b.contact)+'</div></div>' : '')+
         ((b.hasDJ || b.hasStage) ? '<div class="detail-full"><div class="k">Extras</div><div class="v">'+[b.hasDJ?'DJ':null, b.hasStage?'Stage':null].filter(Boolean).join(' · ')+'</div></div>' : '')+
         '<div class="detail-full"><div class="k">Taken by</div><div class="v">'+escapeHtml(safeStr(b.takenBy,'—'))+'</div></div>'+
@@ -1223,7 +1227,7 @@
       organiser: r.organiser || '', contact: r.contact || '', takenBy: r.taken_by || '',
       priority: r.priority || 'Medium', status: r.status || 'Enquiry',
       depositAmount: r.deposit_amount || '', notes: r.notes || '',
-      noDeposit: !!r.no_deposit,
+      noDeposit: !!r.no_deposit, tablePref: r.table_pref || '',
       hasDJ: !!r.has_dj, hasStage: !!r.has_stage,
       payments: r.payments || [], refunds: r.refunds || [],
       createdAt: r.created_at, updatedAt: r.updated_at
@@ -1243,12 +1247,13 @@
     // Only send the column once the database is known to have it, so an
     // un-updated database keeps saving normally instead of rejecting
     // every write.
-    if (hasNoDepositColumn) row.no_deposit = !!b.noDeposit;
+    if (COLUMN_OK.no_deposit) row.no_deposit = !!b.noDeposit;
+    if (COLUMN_OK.table_pref) row.table_pref = b.tablePref || null;
     return row;
   }
 
   function loadBookings(){
-    return probeNoDepositColumn().then(function(){
+    return probeColumns().then(function(){
       return apiFetch('/bookings?select=*', { method: 'GET', headers: {} });
     }).then(function(rows){
       state = { bookings: (rows || []).map(rowToBooking) };
@@ -1467,9 +1472,40 @@
   // a big ticketed night where the door takes the money is the usual one.
   function bookingNeedsDeposit(b){ return areaNeedsDeposit(b.area) && !b.noDeposit; }
 
+  // Only the restaurant seats people at a table, so the preference only
+  // makes sense there.
+  function areaHasTables(area){ return area === 'Restaurant'; }
+
+  // Rebuilt rather than hidden: an <option> that is merely hidden can still
+  // be reached by a keyboard or a screen reader.
+  function syncStatusOptions(needsDeposit){
+    var sel = document.getElementById('f-status');
+    var want = needsDeposit ? STATUSES : STATUSES.filter(function(st){
+      return DEPOSIT_STATUSES.indexOf(st) === -1;
+    });
+    var have = Array.prototype.map.call(sel.options, function(o){ return o.value; });
+    if (have.join('|') === want.join('|')) return;
+    var current = sel.value;
+    sel.innerHTML = want.map(function(st){ return '<option>' + st + '</option>'; }).join('');
+    sel.value = want.indexOf(current) !== -1 ? current : 'Confirmed';
+  }
+
+  // The option list is rebuilt per area, so a stored status has to be
+  // applied after that — and can no longer be there at all (a restaurant
+  // booking saved as "Deposit Paid" before this rule existed).
+  function setStatus(value){
+    var sel = document.getElementById('f-status');
+    var wanted = safeStr(value, 'Enquiry');
+    var found = Array.prototype.some.call(sel.options, function(o){ return o.value === wanted; });
+    sel.value = found ? wanted : 'Confirmed';
+  }
+
   function updateDepositVisibility(){
-    var areaTakesOne = areaNeedsDeposit(document.getElementById('f-area').value);
+    var area = document.getElementById('f-area').value;
+    var areaTakesOne = areaNeedsDeposit(area);
     var waived = document.getElementById('f-nodeposit').checked;
+    document.getElementById('tableField').hidden = !areaHasTables(area);
+    syncStatusOptions(areaTakesOne && !waived);
     // On a restaurant booking the tick is moot — the area already says no.
     document.getElementById('noDepositField').hidden = !areaTakesOne;
     document.getElementById('depositFields').hidden = !areaTakesOne || waived;
@@ -1486,43 +1522,53 @@
     }
   }
 
-  // The tick needs a column that a database set up before this feature
-  // existed doesn't have. Rather than break every save until someone runs
-  // the one-line update, the board asks once and leaves the tick greyed
-  // out with a note until the column is there.
-  var hasNoDepositColumn = true, noDepositProbed = false;
-  function probeNoDepositColumn(){
-    if (noDepositProbed) return Promise.resolve();
-    return apiFetch('/bookings?select=no_deposit&limit=1', { method:'GET' })
-      .then(function(){ hasNoDepositColumn = true; noDepositProbed = true; })
-      .catch(function(err){
-        var msg = String((err && err.message) || '');
-        if (msg === 'signed out') throw err;
-        // PostgREST answers an unknown column with 42703 / "does not exist".
-        // Anything else is a dropped connection: leave it enabled and retry.
-        if (/42703|does not exist/i.test(msg)){ hasNoDepositColumn = false; noDepositProbed = true; }
-      })
-      .then(function(){ updateNoDepositAvailability(); });
+  // Fields added after a database was first set up need a column it may not
+  // have. Rather than break every save until someone runs the one-line
+  // update, the board asks the database once which of these it knows, and
+  // greys out the ones it doesn't with a note pointing at the README.
+  var COLUMN_OK = { no_deposit: true, table_pref: true };
+  var columnsProbed = false;
+  function probeColumns(){
+    if (columnsProbed) return Promise.resolve();
+    var names = Object.keys(COLUMN_OK);
+    return Promise.all(names.map(function(name){
+      return apiFetch('/bookings?select=' + name + '&limit=1', { method:'GET' })
+        .then(function(){ COLUMN_OK[name] = true; return true; })
+        .catch(function(err){
+          var msg = String((err && err.message) || '');
+          if (msg === 'signed out') throw err;
+          // PostgREST answers an unknown column with 42703 / "does not exist".
+          if (/42703|does not exist|PGRST204/i.test(msg)){ COLUMN_OK[name] = false; return true; }
+          // Anything else is a dropped connection, not a real answer: assume
+          // the column is there, and ask again on the next load.
+          return false;
+        });
+    })).then(function(answered){
+      if (answered.every(Boolean)) columnsProbed = true;
+      applyColumnAvailability();
+    });
   }
-  function updateNoDepositAvailability(){
+
+  function applyColumnAvailability(){
     var box = document.getElementById('f-nodeposit');
-    box.disabled = !hasNoDepositColumn;
-    if (!hasNoDepositColumn) box.checked = false;
-    document.getElementById('noDepositLabel').classList.toggle('off', !hasNoDepositColumn);
-    document.getElementById('noDepositUnavailable').hidden = hasNoDepositColumn;
+    box.disabled = !COLUMN_OK.no_deposit;
+    if (!COLUMN_OK.no_deposit) box.checked = false;
+    document.getElementById('noDepositLabel').classList.toggle('off', !COLUMN_OK.no_deposit);
+    document.getElementById('noDepositUnavailable').hidden = COLUMN_OK.no_deposit;
+
+    var table = document.getElementById('f-table');
+    table.disabled = !COLUMN_OK.table_pref;
+    if (!COLUMN_OK.table_pref) table.value = '';
+    document.getElementById('tableUnavailable').hidden = COLUMN_OK.table_pref;
+
     updateDepositVisibility();
   }
 
-  // Whoever took the last booking on THIS phone is almost always whoever is
-  // taking the next one, so the name is remembered per device (never shared
-  // in the board itself) and pre-filled for new bookings only.
-  var TAKEN_BY_KEY = 'functionSheetTakenBy';
-  function rememberTakenBy(name){
-    try{ localStorage.setItem(TAKEN_BY_KEY, name); }catch(e){}
-  }
-  function lastTakenBy(){
-    try{ return localStorage.getItem(TAKEN_BY_KEY) || ''; }catch(e){ return ''; }
-  }
+  // "Taken by" used to pre-fill with whoever last used this phone. On a
+  // shared phone that quietly put the wrong manager's name on bookings, so
+  // it now starts empty every time and has to be typed. Any name left over
+  // from the old behaviour is cleared out.
+  try{ localStorage.removeItem('functionSheetTakenBy'); }catch(e){}
 
   function clearFieldErrors(){
     ['f-date-field','f-area-field','f-pax-field','f-taken-field'].forEach(function(id){
@@ -1555,19 +1601,18 @@
       document.getElementById('f-stage').checked = !!booking.hasStage;
       document.getElementById('f-organiser').value = booking.organiser || '';
       document.getElementById('f-contact').value = booking.contact || '';
-      document.getElementById('f-taken').value = booking.takenBy || lastTakenBy();
-      document.getElementById('f-status').value = safeStr(booking.status, 'Enquiry');
-      document.getElementById('f-nodeposit').checked = hasNoDepositColumn && !!booking.noDeposit;
+      document.getElementById('f-taken').value = booking.takenBy || '';
+      document.getElementById('f-nodeposit').checked = COLUMN_OK.no_deposit && !!booking.noDeposit;
+      document.getElementById('f-table').value = COLUMN_OK.table_pref ? (booking.tablePref || '') : '';
       document.getElementById('f-deposit').value = booking.depositAmount || '';
       document.getElementById('f-notes').value = booking.notes || '';
       draftPayments = (booking.payments||[]).slice();
       draftRefunds = (booking.refunds||[]).slice();
       renderDraftFiles();
-    } else {
-      document.getElementById('f-taken').value = lastTakenBy();
     }
     updateSizePreview();
     updateDepositVisibility();
+    setStatus(booking ? booking.status : 'Enquiry');
     document.getElementById('bookingDialog').showModal();
   }
 
@@ -1586,6 +1631,7 @@
       takenBy: document.getElementById('f-taken').value,
       status: document.getElementById('f-status').value,
       noDeposit: document.getElementById('f-nodeposit').checked,
+      tablePref: document.getElementById('f-table').value,
       depositAmount: document.getElementById('f-deposit').value,
       notes: document.getElementById('f-notes').value,
       payments: draftPayments,
@@ -1603,15 +1649,16 @@
     document.getElementById('f-stage').checked = !!v.hasStage;
     document.getElementById('f-organiser').value = v.organiser || '';
     document.getElementById('f-contact').value = v.contact || '';
-    document.getElementById('f-taken').value = v.takenBy || lastTakenBy();
-    document.getElementById('f-status').value = v.status || 'Enquiry';
-    document.getElementById('f-nodeposit').checked = hasNoDepositColumn && !!v.noDeposit;
+    document.getElementById('f-taken').value = v.takenBy || '';
+    document.getElementById('f-nodeposit').checked = COLUMN_OK.no_deposit && !!v.noDeposit;
+    document.getElementById('f-table').value = COLUMN_OK.table_pref ? (v.tablePref || '') : '';
     document.getElementById('f-deposit').value = v.depositAmount || '';
     document.getElementById('f-notes').value = v.notes || '';
     draftPayments = v.payments || []; draftRefunds = v.refunds || [];
     renderDraftFiles();
     updateSizePreview();
     updateDepositVisibility();
+    setStatus(v.status);
   }
 
   function updateSizePreview(){
@@ -1762,7 +1809,7 @@
     document.getElementById('f-pax').addEventListener('input', function(){ updateSizePreview(); saveDraft(); });
     document.getElementById('f-area').addEventListener('change', updateDepositVisibility);
     document.getElementById('f-nodeposit').addEventListener('change', updateDepositVisibility);
-    ['f-date','f-time','f-area','f-dj','f-stage','f-nodeposit','f-organiser','f-contact','f-taken','f-status','f-deposit','f-notes','f-priority'].forEach(function(id){
+    ['f-date','f-time','f-area','f-dj','f-stage','f-nodeposit','f-organiser','f-contact','f-taken','f-status','f-table','f-deposit','f-notes','f-priority'].forEach(function(id){
       document.getElementById(id).addEventListener('input', saveDraft);
       document.getElementById(id).addEventListener('change', saveDraft);
     });
@@ -1873,6 +1920,9 @@
         priority: document.getElementById('f-priority').value,
         status: document.getElementById('f-status').value,
         noDeposit: waived,
+        // Only the restaurant has tables, so a preference typed before the
+        // area was switched never gets saved behind the hidden field.
+        tablePref: areaHasTables(areaEl.value) ? document.getElementById('f-table').value.trim() : '',
         // A booking with no deposit — a restaurant table, or one waived by
         // hand — never saves an amount or a receipt behind the hidden
         // fields, even if they held something before the tick went on.
@@ -1890,7 +1940,6 @@
 
       var saveBtn = document.getElementById('formSave');
       saveBtn.disabled = true; saveBtn.textContent = 'Saving…';
-      rememberTakenBy(booking.takenBy);
       clearDraft();
       state = newState;
       closeFormSilent();

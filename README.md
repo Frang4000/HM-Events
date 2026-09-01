@@ -61,11 +61,11 @@ Post the address in the staff WhatsApp group with the password. On a phone:
 
 ---
 
-## Adding the no-deposit tick
+## Adding the newer fields
 
-**Only needed on a database made before this feature existed.** If the “No
-deposit needed” tick on the booking form is greyed out, the database is missing
-one column. Add it once:
+**Only needed on a database made before these features existed.** If the
+“No deposit needed” tick or the “Table preference” box on the booking form is
+greyed out, the database is missing a column or two. Add them once:
 
 1. Supabase → **SQL Editor** → **New query**.
 2. Paste this and press **Run**:
@@ -73,13 +73,15 @@ one column. Add it once:
    ```sql
    alter table public.bookings
      add column if not exists no_deposit boolean not null default false;
+   alter table public.bookings
+     add column if not exists table_pref text;
    ```
 
-3. Reload the board. The tick is live.
+3. Reload the board. Both are live.
 
-Until you do, everything else keeps working normally — the board just won't let
-anyone waive a deposit. (Running the whole of `schema.sql` again does the same
-thing and is equally safe.)
+Until you do, everything else keeps working normally — the board just won't
+let anyone use those two fields. (Running the whole of `schema.sql` again does
+the same thing and is equally safe.)
 
 ---
 
