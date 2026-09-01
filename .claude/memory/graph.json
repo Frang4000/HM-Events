@@ -377,6 +377,22 @@
         "ephemeral-container"
       ],
       "date": "2026-09-01"
+    },
+    {
+      "id": "fanout-costs-more",
+      "type": "constraint",
+      "title": "Spawning agents usually costs more tokens, not fewer",
+      "tags": [
+        "agents",
+        "cost",
+        "build-crew"
+      ],
+      "what": "Every subagent starts cold and re-derives context the orchestrator already has. Three agents on a small change can cost several times doing it directly.",
+      "why": "The build-crew skill exists to route work to the cheapest capable model and to spawn only what is needed — not to always use five. The routing gate at the top of that skill is the part that saves anything.",
+      "relates_to": [
+        "ephemeral-container"
+      ],
+      "date": "2026-09-01"
     }
   ]
 }

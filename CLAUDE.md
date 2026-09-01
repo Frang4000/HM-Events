@@ -33,6 +33,16 @@ Search it for whatever you are about to touch before changing behaviour, and
 add to it when a session works something out. `.claude/memory/map.html` is the
 same thing drawn as a picture, for a human to look at.
 
+## Splitting a job up
+
+`.claude/agents/` defines five specialists — builder, designer, security,
+reviewer, tester — each pinned to a model and effort level suited to its job.
+The **build-crew** skill routes work to them.
+
+Read its routing gate before spawning anything: for most changes here, agents
+cost more than doing the work directly, because each one starts cold. The point
+is spawning only what the task needs.
+
 ## Rules that are not negotiable
 
 **Never commit the staff password or a `service_role` / secret key.** The repo
