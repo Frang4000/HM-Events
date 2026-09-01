@@ -101,6 +101,33 @@
     letter-spacing:.12em; font-size:12px; color:var(--gold); margin:11px 0 0;
   }
   .subhead{ color:rgba(244,241,226,.62); font-size:12.5px; margin:5px 0 0; }
+  /* Sits in the brand band, so it uses the fixed gold like the logo does. */
+  .tc-btn{
+    margin:13px auto 0; display:inline-flex; align-items:center; gap:7px;
+    background:rgba(244,241,226,.08); border:1px solid rgba(200,161,68,.5);
+    color:var(--gold); border-radius:999px; padding:9px 16px;
+    font-size:12.5px; font-weight:600; cursor:pointer; min-height:40px;
+  }
+  .tc-btn:active{ background:rgba(244,241,226,.16); }
+
+  .terms-intro{ color:var(--ink-soft); font-size:13px; line-height:1.5; margin:0 0 18px; }
+  .terms-sec{ margin-bottom:18px; }
+  .terms-sec:last-child{ margin-bottom:0; }
+  .terms-sec h3{
+    font-family:'Oswald',system-ui,sans-serif; text-transform:uppercase; letter-spacing:.07em;
+    font-size:12.5px; color:var(--accent); margin:0 0 9px;
+    padding-bottom:6px; border-bottom:1px solid var(--line);
+  }
+  .terms-sec ul{ margin:0; padding:0; list-style:none; }
+  .terms-sec li{
+    position:relative; padding-left:18px; margin-bottom:9px;
+    font-size:14px; line-height:1.5;
+  }
+  .terms-sec li:last-child{ margin-bottom:0; }
+  .terms-sec li::before{
+    content:''; position:absolute; left:2px; top:8px;
+    width:6px; height:6px; border-radius:50%; background:var(--gold);
+  }
 
   .banner{
     margin:0 18px 12px; padding:10px 14px; border-radius:10px; font-size:13.5px;
@@ -478,6 +505,7 @@
     <h1><img class="brand-logo" src="logo.png" alt="Hotel Maroubra"></h1>
     <p class="tool-label">Event Bookings</p>
     <p class="subhead" id="dateline"></p>
+    <button class="tc-btn" id="termsOpen" type="button">📋 Event T&amp;Cs</button>
   </div>
 
   <div class="banner readonly" id="roBanner" hidden>
@@ -679,6 +707,22 @@
   </div>
 </dialog>
 
+<dialog id="termsDialog">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2>Event T&amp;Cs</h2>
+      <button class="closex" id="termsClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <p class="terms-intro">What we tell an organiser when they book. Run through the
+      relevant ones on the phone, or copy the lot and send it over.</p>
+    <div id="termsBody"></div>
+    <div class="dialog-foot">
+      <button type="button" class="btn" id="termsCopy">Copy all</button>
+      <button type="button" class="btn primary" id="termsDone">Close</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="lightbox">
   <div class="dialog-inner">
     <div class="lbwrap" id="lbWrap"></div>
@@ -726,6 +770,54 @@
     {key:"huge",   label:"Whole-venue", max:Infinity, bg:"#145F5C", fg:"#EAF7F6"}
   ];
   var MAX_ATTACH_MB = 12; // soft budget out of the 16MB artifact cap
+
+  // ---------------------------------------------------------------
+  //  EVENT TERMS & CONDITIONS
+  //  This list is the whole of the T&Cs button — the dialog and the
+  //  "Copy all" text are both built from it, so this is the only place
+  //  to edit. Add a section as { title: '…', points: ['…','…'] }, or
+  //  add a line to an existing one. Nothing else needs touching.
+  // ---------------------------------------------------------------
+  var TERMS = [
+    {
+      title: 'Security deposit',
+      points: [
+        'A $500 security deposit is required for Back Bar bookings — particularly where there is a DJ and a 9:30pm start.',
+        'The deposit is paid with valid photo ID, and the same ID must be presented on collection unless someone else was authorised beforehand.',
+        'It is refunded the following day. The guest needs to bring both their receipt and their ID.',
+        'The deposit is withheld if there is damage to the property, if the law is not followed and things escalate to the point of police being called or intervening, or if anything happens to our staff.'
+      ]
+    },
+    {
+      title: 'Start time',
+      points: [
+        'The earliest start for an event booking is 9:30pm, because the restaurant is still in service before then.'
+      ]
+    },
+    {
+      title: 'Guests',
+      points: [
+        'Strictly 18+. No minors are permitted in the venue for the event.',
+        'RSA applies throughout. Any guest showing signs of intoxication will be cut off.',
+        'Everyone is expected to respect each other and behave in an orderly manner.'
+      ]
+    },
+    {
+      title: 'Food and drink',
+      points: [
+        'Guests cannot bring their own food or drink.',
+        'A cake or similar is at the discretion of the duty manager.'
+      ]
+    },
+    {
+      title: 'Music, sound and screens',
+      points: [
+        'A DJ and speakers are welcome. After midnight the sound must not carry out to the back lane at a volume loud enough to bother the neighbours.',
+        'To use our speakers, put a playlist together beforehand and give us a Spotify code for it.',
+        'For your own graphics on the TVs, set it up before the event — a laptop with an HDMI cable is what we prefer.'
+      ]
+    }
+  ];
 
   function sizeBand(pax){
     var n = parseInt(pax, 10);
@@ -1325,6 +1417,43 @@
     if (stale.length) document.getElementById('staleDialog').showModal();
   }
 
+  // ---------------- event T&Cs ----------------
+  function renderTerms(){
+    document.getElementById('termsBody').innerHTML = TERMS.map(function(sec){
+      return '<section class="terms-sec"><h3>'+escapeHtml(sec.title)+'</h3><ul>'+
+        sec.points.map(function(t){ return '<li>'+escapeHtml(t)+'</li>'; }).join('')+
+        '</ul></section>';
+    }).join('');
+  }
+
+  function termsAsText(){
+    return 'HOTEL MAROUBRA — EVENT TERMS\n\n' + TERMS.map(function(sec){
+      return sec.title.toUpperCase()+'\n'+sec.points.map(function(t){ return '• '+t; }).join('\n');
+    }).join('\n\n');
+  }
+
+  function copyTerms(){
+    var text = termsAsText();
+    var done = function(){ showToast('Terms copied — paste them into the chat.'); };
+    var fallback = function(){
+      // Older iOS Safari has no async clipboard; a hidden textarea still works.
+      try{
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly','');
+        ta.style.position = 'fixed'; ta.style.top = '-1000px';
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0, text.length);
+        var copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (copied) return done();
+      }catch(e){}
+      showToast('Couldn\u2019t copy on this browser — select the text by hand instead.');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(fallback);
+    } else fallback();
+  }
+
   // ---------------- form handling ----------------
   var draftPayments = [];
   var draftRefunds = [];
@@ -1614,6 +1743,17 @@
       }
     });
 
+    document.getElementById('termsOpen').addEventListener('click', function(){
+      document.getElementById('termsDialog').showModal();
+    });
+    document.getElementById('termsClose').addEventListener('click', function(){
+      document.getElementById('termsDialog').close();
+    });
+    document.getElementById('termsDone').addEventListener('click', function(){
+      document.getElementById('termsDialog').close();
+    });
+    document.getElementById('termsCopy').addEventListener('click', copyTerms);
+
     document.getElementById('fabNew').addEventListener('click', function(){ openForm(null); });
     document.getElementById('formClose').addEventListener('click', closeForm);
     document.getElementById('formCancel').addEventListener('click', closeForm);
@@ -1853,6 +1993,8 @@
 
   function boot(){
     renderAll();
+    // Static content — built once, not on every re-render.
+    renderTerms();
     // Lets a phone's password manager store the shared staff password
     // against a username, and quiets the browser's accessibility warning.
     document.getElementById('authUser').value = CFG.staffEmail || 'staff';
