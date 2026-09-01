@@ -1,0 +1,382 @@
+{
+  "project": "Hotel Maroubra — Function Sheet",
+  "updated": "2026-09-01",
+  "entries": [
+    {
+      "id": "public-repo-no-secrets",
+      "type": "rule",
+      "title": "No password or service_role key in the repo, ever",
+      "tags": [
+        "security",
+        "supabase",
+        "commit"
+      ],
+      "what": "config.js carries only the project URL, the publishable (anon) key and the staff email. Grep for secrets before every commit.",
+      "why": "The repo is public — GitHub Pages' free tier requires it. The publishable key is safe because RLS restricts the table to signed-in staff; the service_role key bypasses RLS entirely.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "escape-on-output",
+      "type": "rule",
+      "title": "Escape when drawing, not when storing",
+      "tags": [
+        "security",
+        "xss",
+        "render"
+      ],
+      "what": "Every user-typed value goes through escapeHtml at render time.",
+      "why": "Storing escaped text corrupts the data and breaks CSV exports. Escaping at the boundary where it becomes markup is the only place it is reliably correct.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "attachments-are-untrusted",
+      "type": "rule",
+      "title": "Trust nothing in the payments/refunds columns",
+      "tags": [
+        "security",
+        "xss",
+        "attachments"
+      ],
+      "what": "safeDataUrl() only lets through a data: URL of one of four types, base64 only. Anything else renders as an unreadable slot and refuses to open.",
+      "why": "Anyone with the staff password can write those jsonb columns straight over the REST API, never touching the form. An unescaped dataUrl was stored XSS on every other manager's phone.",
+      "caused_by": [
+        "attachment-xss-hole"
+      ],
+      "date": "2026-09-01"
+    },
+    {
+      "id": "column-probe-pattern",
+      "type": "rule",
+      "title": "A new database column needs the probe pattern",
+      "tags": [
+        "schema",
+        "migration",
+        "supabase"
+      ],
+      "what": "Add to schema.sql (create + alter-if-not-exists), add the name to COLUMN_OK, guard the write, grey the control out with a note, document the SQL in the README.",
+      "why": "The push is instant and the SQL is manual, so there is always a window where the site is ahead of the database. Without the guard, every save fails in that window — in a venue, at night.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "touch-targets-40px",
+      "type": "rule",
+      "title": "Nothing tappable under 40px",
+      "tags": [
+        "mobile",
+        "ux"
+      ],
+      "what": "Buttons, chips, tabs and close controls are at least 40px tall.",
+      "why": "This is used one-handed, standing up, mid-shift.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "network-blocks-supabase",
+      "type": "constraint",
+      "title": "Supabase and github.io are unreachable from the build session",
+      "tags": [
+        "testing",
+        "environment"
+      ],
+      "what": "The egress proxy blocks supabase.com, *.supabase.co and github.io. The live site and real database cannot be opened from here.",
+      "why": "Everything is verified against a local fake Supabase instead. Say this plainly rather than implying the live site was checked.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "ephemeral-container",
+      "type": "constraint",
+      "title": "Only what is committed survives",
+      "tags": [
+        "environment"
+      ],
+      "what": "The session runs in a throwaway container. Anything outside the git repo — installed packages, ~/.claude config, scratch files — is gone when it ends.",
+      "why": "It is why this memory lives in the repo rather than in an agent's config directory.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "not-a-programmer",
+      "type": "constraint",
+      "title": "Alex runs a pub, not a codebase",
+      "tags": [
+        "communication"
+      ],
+      "what": "Explain the one manual step clearly and early. Screenshots beat descriptions. Own a bug directly when it is mine.",
+      "why": "The app is live in a working venue; a broken save is a real problem at 9pm on a Saturday.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "chronological-order",
+      "type": "decision",
+      "title": "Lists are chronological, never urgency-sorted",
+      "tags": [
+        "list",
+        "sorting"
+      ],
+      "what": "All tabs order by date. The old urgencyScore is gone.",
+      "why": "Sorting by urgency put a deposit chase two weeks out above an event tomorrow, and the board looked shuffled.",
+      "caused_by": [
+        "urgency-sort-shuffle"
+      ],
+      "date": "2026-08-31"
+    },
+    {
+      "id": "area-chips-are-or",
+      "type": "decision",
+      "title": "Area chips widen the list, they don't narrow it",
+      "tags": [
+        "filter",
+        "ux"
+      ],
+      "what": "Ticking Front Bar and Whole Venue shows both.",
+      "why": "Managers filter to 'the rooms I care about tonight', not to an intersection — an AND of two areas is always empty.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "never-auto-delete",
+      "type": "decision",
+      "title": "Nothing is ever deleted on its own",
+      "tags": [
+        "data",
+        "ux"
+      ],
+      "what": "Events more than two days past prompt on open; a human clears or reschedules each one.",
+      "why": "Asked for explicitly. A booking that vanishes by itself is indistinguishable from one that was never saved.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "taken-by-starts-empty",
+      "type": "decision",
+      "title": "\"Taken by\" never pre-fills",
+      "tags": [
+        "form",
+        "data-quality"
+      ],
+      "what": "The field is blank on every new booking and must be typed.",
+      "why": "It used to remember the last name used on that phone. On a shared handset that quietly attributed bookings to whoever used it last.",
+      "caused_by": [
+        "taken-by-wrong-name"
+      ],
+      "date": "2026-09-01"
+    },
+    {
+      "id": "sheet-holds-fixed-height",
+      "type": "decision",
+      "title": "The booking sheet holds a fixed height",
+      "tags": [
+        "dialog",
+        "mobile",
+        "layout"
+      ],
+      "what": "#bookingDialog is 92dvh tall and scrolls internally; the header is sticky.",
+      "why": "Sizing to content made the bottom-anchored sheet shrink when fields hid, sliding its top edge and the ✕ down the screen mid-tap.",
+      "caused_by": [
+        "dialog-jump-on-area-change"
+      ],
+      "date": "2026-09-01"
+    },
+    {
+      "id": "tabs-wrap",
+      "type": "decision",
+      "title": "Tabs wrap onto a second line",
+      "tags": [
+        "mobile",
+        "layout"
+      ],
+      "what": "The tab strip is flex-wrap, not overflow-x with a fade.",
+      "why": "The fourth tab, Past, sat off the right edge of a phone where nobody found it.",
+      "caused_by": [
+        "past-tab-offscreen"
+      ],
+      "date": "2026-09-01"
+    },
+    {
+      "id": "deposit-rules",
+      "type": "decision",
+      "title": "Restaurant takes no deposit; anything else can waive one",
+      "tags": [
+        "deposit",
+        "form"
+      ],
+      "what": "Restaurant is deposit-free by area. Every other area has a 'No deposit needed' tick. Deposit statuses drop out of the Status list when no deposit applies.",
+      "why": "A table booking is not a buyout, and large ticketed nights sometimes take the money on the door.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "terms-single-source",
+      "type": "decision",
+      "title": "The T&Cs render from one TERMS array",
+      "tags": [
+        "terms",
+        "content"
+      ],
+      "what": "Both the dialog and the 'Copy all' text build from TERMS at the top of the script.",
+      "why": "Alex updates the wording periodically; two copies would drift.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "attachment-xss-hole",
+      "type": "bug",
+      "title": "A planted receipt could run code on every phone",
+      "tags": [
+        "security",
+        "xss"
+      ],
+      "what": "fileThumb and openLightbox interpolated f.dataUrl and f.id straight into HTML, and framed anything whose type field claimed application/pdf.",
+      "why": "Fixed by validating the data URL and escaping the attributes. Verified with an actual attack row written straight to the database.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "dialog-jump-on-area-change",
+      "type": "bug",
+      "title": "Picking an area moved the ✕ out from under the thumb",
+      "tags": [
+        "dialog",
+        "mobile"
+      ],
+      "what": "The sheet was bottom-anchored and content-sized, so hiding the deposit block slid its top edge down — measured at 111px, and 387px once a scroll position clamped.",
+      "why": "Reported as 'it messes up and presses everything'. Invisible in a test until the ✕ position was measured before and after.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "taken-by-wrong-name",
+      "type": "bug",
+      "title": "Someone else's name kept appearing on new bookings",
+      "tags": [
+        "form",
+        "data-quality"
+      ],
+      "what": "A remembered name in localStorage pre-filled 'Taken by' on a shared phone.",
+      "why": "Reported as 'it keeps saying Damon'. A convenience feature quietly corrupting an accountability field.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "past-tab-offscreen",
+      "type": "bug",
+      "title": "The Past tab was invisible on a phone",
+      "tags": [
+        "mobile",
+        "layout"
+      ],
+      "what": "The tab strip scrolled sideways with a fade that read as decoration rather than as 'there is more'.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "urgency-sort-shuffle",
+      "type": "bug",
+      "title": "The board looked shuffled",
+      "tags": [
+        "list",
+        "sorting"
+      ],
+      "what": "An urgency score outranked the date, so a deposit chase weeks away sat above tomorrow night's event.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "visually-hidden-overridden",
+      "type": "gotcha",
+      "title": "A more specific selector silently un-hid a hidden field",
+      "tags": [
+        "css",
+        "specificity"
+      ],
+      "what": ".auth-card input (0,1,1) beat .visually-hidden (0,1,0), so the hidden username field was a full screen wide and pushed the sign-in screen sideways.",
+      "why": "Utility classes lose to component selectors. Name the element in the utility rule too.",
+      "relates_to": [
+        "tabs-wrap"
+      ],
+      "date": "2026-09-01"
+    },
+    {
+      "id": "native-validation-preempts",
+      "type": "gotcha",
+      "title": "The browser's own popup hid the styled errors",
+      "tags": [
+        "form",
+        "validation"
+      ],
+      "what": "required fired the native bubble before the custom inline messages could show. The form carries novalidate; the attributes stay for semantics.",
+      "why": "Only showed up on a real click, never in code that called the submit handler directly.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "accept-is-only-a-hint",
+      "type": "gotcha",
+      "title": "accept=\"\" on a file input is not validation",
+      "tags": [
+        "security",
+        "upload"
+      ],
+      "what": "A PDF is verified by its first bytes (%PDF-); images must genuinely decode and are re-encoded to JPEG.",
+      "why": "The picker's filter is trivially bypassed — an HTML file named receipt.pdf sailed through.",
+      "relates_to": [
+        "attachments-are-untrusted"
+      ],
+      "date": "2026-09-01"
+    },
+    {
+      "id": "csp-meta-limits",
+      "type": "gotcha",
+      "title": "frame-ancestors does nothing in a meta CSP",
+      "tags": [
+        "security",
+        "csp"
+      ],
+      "what": "It only works as a real HTTP header, and GitHub Pages cannot send headers. connect-src is the directive that earns its place here.",
+      "why": "Worth stating rather than implying the page is protected against framing.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "test-copy-needs-csp-hole",
+      "type": "gotcha",
+      "title": "The CSP blocks the local fake database",
+      "tags": [
+        "testing",
+        "csp"
+      ],
+      "what": "The scratch copy needs 127.0.0.1 added to connect-src. Test the shipped policy separately against the untouched file.",
+      "why": "Otherwise you are either testing a policy nobody ships, or not testing the app at all.",
+      "relates_to": [
+        "network-blocks-supabase",
+        "csp-meta-limits"
+      ],
+      "date": "2026-09-01"
+    },
+    {
+      "id": "missing-charset-mojibake",
+      "type": "gotcha",
+      "title": "No charset meant broken apostrophes",
+      "tags": [
+        "build",
+        "encoding"
+      ],
+      "what": "The standalone build had no <meta charset=\"utf-8\">, so curly quotes and emoji rendered as mojibake.",
+      "date": "2026-08-31"
+    },
+    {
+      "id": "silent-failed-edit-batch",
+      "type": "gotcha",
+      "title": "A failed edit in a batch discards the whole batch",
+      "tags": [
+        "process",
+        "editing"
+      ],
+      "what": "One patch script exited on a bad match after earlier replacements had been applied in memory, so the file was never written and two changes vanished silently.",
+      "why": "Only the test caught it. Verify what actually landed rather than trusting the script printed something.",
+      "date": "2026-09-01"
+    },
+    {
+      "id": "graph-not-learning",
+      "type": "constraint",
+      "title": "A memory file does not make a session start knowing things",
+      "tags": [
+        "memory",
+        "expectations"
+      ],
+      "what": "Every session begins blank. This store still has to be read; structure changes how much is read, not whether reading happens.",
+      "why": "Asked for a graph so re-reading would not be needed. Worth saying plainly rather than implying the tool learns.",
+      "relates_to": [
+        "ephemeral-container"
+      ],
+      "date": "2026-09-01"
+    }
+  ]
+}

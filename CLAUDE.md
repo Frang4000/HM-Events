@@ -18,6 +18,21 @@ says so and should stay.
 
 Push to `main` and GitHub Pages republishes within a minute. That is the deploy.
 
+## Before you change how something behaves
+
+There is a longer memory than this file: `.claude/memory/graph.json`, read
+through the **project-memory** skill. It holds the bugs already fixed, the
+decisions already settled and why, and the traps that cost time — linked, so a
+decision arrives with the failure that forced it.
+
+```bash
+python3 .claude/skills/project-memory/scripts/memory.py find <terms>
+```
+
+Search it for whatever you are about to touch before changing behaviour, and
+add to it when a session works something out. `.claude/memory/map.html` is the
+same thing drawn as a picture, for a human to look at.
+
 ## Rules that are not negotiable
 
 **Never commit the staff password or a `service_role` / secret key.** The repo
