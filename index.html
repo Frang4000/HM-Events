@@ -339,9 +339,28 @@
   .dialog-inner{
     overflow-y:auto; -webkit-overflow-scrolling:touch;
     max-height:92vh; max-height:92dvh;
-    padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+    padding:0 16px calc(20px + env(safe-area-inset-bottom));
   }
-  .dialog-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
+  /* No sticky header here — it keeps its own breathing room. */
+  #lightbox .dialog-inner{ padding-top:18px; }
+  /* The booking form shows and hides whole blocks of fields as the area
+     changes. The sheet is anchored to the bottom of the screen, so letting
+     its height follow the content made the top edge — and the ✕ with it —
+     jump as much as a third of the screen the moment an area was picked,
+     landing the next tap on whatever had slid under the thumb. Fixing the
+     height keeps the sheet still; the fields scroll inside it instead. */
+  #bookingDialog{ height:92vh; height:92dvh; }
+  #bookingDialog .dialog-inner{ height:100%; }
+
+  /* Sticky so the way out is always at the top of the sheet, however far
+     down the form someone has scrolled. Negative margins cancel the
+     scroller's padding so it sits edge to edge. */
+  .dialog-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    position:sticky; top:0; z-index:3; background:var(--surface);
+    margin:0 -16px 14px; padding:18px 16px 12px;
+    border-bottom:1px solid var(--line);
+  }
   .dialog-head h2{ font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.02em; font-size:19px; margin:0; }
   .closex{
     border:none; background:var(--surface-2); color:var(--ink-soft); width:42px; height:42px;
