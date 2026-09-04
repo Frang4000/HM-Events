@@ -114,6 +114,31 @@
   }
   .subhead{ color:rgba(244,241,226,.62); font-size:12.5px; margin:5px 0 0; }
   /* Sits in the brand band, so it uses the fixed gold like the logo does. */
+  /* Top left of the brand band, opposite the logo. Absolute so it doesn't
+     shove the centred logo off-axis. */
+  .areaswitch{
+    position:absolute; top:12px; left:12px; z-index:5;
+    background:rgba(244,241,226,.10); border:1px solid rgba(200,161,68,.5);
+    color:var(--gold); border-radius:999px; padding:8px 14px;
+    font-size:12.5px; font-weight:600; cursor:pointer; min-height:40px;
+    max-width:calc(100% - 24px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .areaswitch:active{ background:rgba(244,241,226,.2); }
+  .topbar{ position:relative; }
+
+  .ev-kind{
+    display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; padding:3px 8px; border-radius:999px;
+    background:var(--surface-2); color:var(--ink-soft);
+  }
+  .ev-kind.sport{ background:var(--accent-soft); color:var(--accent-ink); }
+  .ev-screens{ font-size:11.5px; color:var(--good); font-weight:600; }
+  .ev-off{ font-size:11.5px; color:var(--ink-faint); font-weight:600; }
+  .crowd-quiet  { background:#EDEFF2; color:#4A5560; }
+  .crowd-steady { background:#E4EAF7; color:#2B4680; }
+  .crowd-busy   { background:#FBE9D8; color:#8A430B; }
+  .crowd-packed { background:#FBE3E4; color:#98262D; }
+
   .tc-btn{
     margin:13px auto 0; display:inline-flex; align-items:center; gap:7px;
     background:rgba(244,241,226,.08); border:1px solid rgba(200,161,68,.5);
@@ -323,6 +348,9 @@
     justify-content:center; gap:8px; min-height:54px; pointer-events:auto;
   }
   .fab:active{ transform:scale(.985); }
+  /* An explicit display beats the hidden attribute, so these have to say so
+     themselves — the same trap the deposit block fell into. */
+  .fab[hidden], .stats[hidden], .tabs[hidden]{ display:none; }
 
   /* ---------- dialogs ---------- */
   /* dvh keeps the sheet sized to what's actually on screen when the mobile
@@ -536,6 +564,9 @@
 <div id="page-root">
 <div id="app">
   <div class="topbar">
+    <button class="areaswitch" id="modeSwitch" type="button">
+      <span id="modeSwitchLabel">📅 Upcoming events</span>
+    </button>
     <h1><img class="brand-logo" src="logo.png" alt="Hotel Maroubra"></h1>
     <p class="tool-label">Event Bookings</p>
     <p class="subhead" id="dateline"></p>
@@ -557,6 +588,22 @@
 
   <div class="stats" id="stats"></div>
 
+  <div id="eventsArea" hidden>
+    <div class="stats" id="eventStats"></div>
+    <div class="controls">
+      <div class="tabs" id="eventTabs"></div>
+      <div class="searchrow">
+        <input type="text" id="eventSearch" placeholder="Search events…">
+      </div>
+    </div>
+    <p class="deposit-note" id="eventsUnavailable" hidden style="margin:0 14px 12px;">
+      The events list needs its table adding to the database — see “Adding the newer
+      fields” in the README. Bookings are unaffected.
+    </p>
+    <div id="eventList"></div>
+  </div>
+
+  <div id="bookingsArea">
   <div class="controls">
     <div class="tabs" id="tabs"></div>
     <div class="searchrow">
@@ -567,6 +614,7 @@
   </div>
 
   <div id="list"></div>
+  </div>
 
   <p class="footer-note" id="storageNote"></p>
   <button class="signout" id="signOut" type="button">Sign out of this phone</button>
@@ -575,6 +623,7 @@
 
 <div class="actionbar write-only" id="actionBar">
   <button class="fab write-only" id="fabNew">+ New booking</button>
+  <button class="fab write-only" id="fabNewEvent" hidden>+ New event</button>
 </div>
 
 <dialog id="bookingDialog">
@@ -736,6 +785,101 @@
     <div class="dialog-foot">
       <button type="button" class="btn" id="staleNotNow">Not now</button>
       <button type="button" class="btn danger write-only" id="staleClearAll">Clear all</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="eventDialog">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2 id="eventFormTitle">New event</h2>
+      <button class="closex" id="eventFormClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <form id="eventForm" novalidate>
+      <input type="hidden" id="e-id">
+
+      <div class="field" id="e-title-field">
+        <label for="e-title">What's on</label>
+        <input type="text" id="e-title" placeholder="e.g. Roosters v Rabbitohs" required>
+        <div class="error">Give it a name so the team knows what it is.</div>
+      </div>
+
+      <div class="field">
+        <label for="e-kind">What kind of event</label>
+        <select id="e-kind">
+          <option>Sport</option>
+          <option>Live music</option>
+          <option>Trivia</option>
+          <option>Public holiday</option>
+          <option>Big race / one-off</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="field" id="e-sport-field">
+        <label for="e-sport">Which sport</label>
+        <select id="e-sport">
+          <option>NRL</option>
+          <option>AFL</option>
+          <option>Football (A-League)</option>
+          <option>Football (international)</option>
+          <option>Basketball (NBL)</option>
+          <option>Cricket</option>
+          <option>Rugby Union</option>
+          <option>Boxing / UFC</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="row2">
+        <div class="field" id="e-date-field">
+          <label for="e-date">Date</label>
+          <input type="date" id="e-date" required>
+          <div class="error">Pick a date.</div>
+        </div>
+        <div class="field">
+          <label for="e-time">Start <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+          <input type="time" id="e-time">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="e-expected">Expected crowd</label>
+        <select id="e-expected">
+          <option>Quiet</option>
+          <option selected>Steady</option>
+          <option>Busy</option>
+          <option>Packed</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Showing it</label>
+        <div class="checkrow">
+          <label class="checkopt"><input type="checkbox" id="e-showing" checked> 📺 On the screens</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="e-notes">Notes <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+        <textarea id="e-notes" placeholder="Extra staff, specials, which screens, anything the team should know…"></textarea>
+      </div>
+
+      <div class="dialog-foot">
+        <button type="button" class="btn" id="eventFormCancel">Cancel</button>
+        <button type="submit" class="btn primary" id="eventFormSave">Save event</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<dialog id="eventConfirm">
+  <div class="dialog-inner">
+    <div class="dialog-head"><h2>Remove this event?</h2></div>
+    <p style="color:var(--ink-soft);font-size:13.5px;margin:0 0 4px;">It won't come back.</p>
+    <div class="dialog-foot">
+      <button type="button" class="btn" id="eventConfirmNo">Keep it</button>
+      <button type="button" class="btn danger" id="eventConfirmYes">Remove</button>
     </div>
   </div>
 </dialog>
@@ -924,8 +1068,14 @@
   }
 
   // ---------------- state ----------------
-  var state = { bookings: [] };
+  var state = { bookings: [], events: [] };
   var view = { tab: 'attention', areas: [], search: '' };
+  // 'bookings' or 'events'. Two boards behind one door — a booking is
+  // something we sold, an event is something happening in Sydney that will
+  // fill the place whether we like it or not.
+  var mode = 'bookings';
+  var eventView = { tab: 'upcoming', search: '' };
+  var openEventId = null;
   var isReadOnly = false;
   var openCardId = null;
 
@@ -1170,6 +1320,222 @@
     if (renderedDay !== todayKey()) renderAll();
   }
 
+  // ---------------- event form ----------------
+  function updateSportVisibility(){
+    document.getElementById('e-sport-field').hidden =
+      document.getElementById('e-kind').value !== 'Sport';
+  }
+
+  function openEventForm(ev){
+    var f = document.getElementById('eventForm');
+    f.reset();
+    ['e-title-field','e-date-field'].forEach(function(id){
+      document.getElementById(id).classList.remove('invalid');
+    });
+    document.getElementById('e-id').value = '';
+    document.getElementById('eventFormTitle').textContent = ev ? 'Edit event' : 'New event';
+    if (ev){
+      document.getElementById('e-id').value = ev.id;
+      document.getElementById('e-title').value = ev.title || '';
+      document.getElementById('e-kind').value = safeStr(ev.kind, 'Sport');
+      document.getElementById('e-sport').value = safeStr(ev.sport, 'NRL');
+      document.getElementById('e-date').value = safeStr(ev.date, '');
+      document.getElementById('e-time').value = safeStr(ev.time, '');
+      document.getElementById('e-expected').value = safeStr(ev.expected, 'Steady');
+      document.getElementById('e-showing').checked = ev.showing !== false;
+      document.getElementById('e-notes').value = ev.notes || '';
+    }
+    updateSportVisibility();
+    document.getElementById('eventDialog').showModal();
+  }
+
+  function submitEventForm(e){
+    e.preventDefault();
+    var titleEl = document.getElementById('e-title');
+    var dateEl  = document.getElementById('e-date');
+    var ok = true, firstBad = null;
+    if (!titleEl.value.trim()){
+      document.getElementById('e-title-field').classList.add('invalid'); ok = false; firstBad = titleEl;
+    } else document.getElementById('e-title-field').classList.remove('invalid');
+    if (!dateEl.value){
+      document.getElementById('e-date-field').classList.add('invalid'); ok = false; firstBad = firstBad || dateEl;
+    } else document.getElementById('e-date-field').classList.remove('invalid');
+    if (!ok){
+      if (firstBad){
+        firstBad.scrollIntoView({block:'center', behavior:'smooth'});
+        try{ firstBad.focus({preventScroll:true}); }catch(err){ firstBad.focus(); }
+      }
+      return;
+    }
+
+    var id = document.getElementById('e-id').value || uid();
+    var existing = (state.events || []).find(function(x){ return x.id === id; });
+    var kind = document.getElementById('e-kind').value;
+    var ev = {
+      id: id,
+      createdAt: existing ? existing.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      date: dateEl.value,
+      time: document.getElementById('e-time').value,
+      title: titleEl.value.trim(),
+      kind: kind,
+      // A sport only means something on a sport event — never save one
+      // behind the hidden field after the kind was switched.
+      sport: kind === 'Sport' ? document.getElementById('e-sport').value : '',
+      showing: document.getElementById('e-showing').checked,
+      expected: document.getElementById('e-expected').value,
+      notes: document.getElementById('e-notes').value.trim(),
+      source: existing ? (existing.source || 'manual') : 'manual'
+    };
+
+    var previous = (state.events || []).slice();
+    var next = previous.slice();
+    var i = next.findIndex(function(x){ return x.id === id; });
+    if (i === -1) next.push(ev); else next[i] = ev;
+
+    var btn = document.getElementById('eventFormSave');
+    btn.disabled = true; btn.textContent = 'Saving…';
+    state.events = next;
+    document.getElementById('eventDialog').close();
+    renderAll();
+    saveEvents(next, previous, function(){
+      btn.disabled = false; btn.textContent = 'Save event';
+    });
+  }
+
+  var pendingEventDelete = null;
+  function removeEvent(id){
+    var previous = (state.events || []).slice();
+    var next = previous.filter(function(x){ return x.id !== id; });
+    state.events = next;
+    if (openEventId === id) openEventId = null;
+    renderAll();
+    saveEvents(next, previous, function(){});
+  }
+
+  // ---------------- events board ----------------
+  function visibleEvents(){
+    var list = (state.events || []).slice();
+    if (eventView.tab === 'upcoming'){
+      list = list.filter(function(e){ return daysUntil(e.date) >= 0; });
+    } else if (eventView.tab === 'past'){
+      list = list.filter(function(e){ return daysUntil(e.date) < 0; });
+    }
+    var q = eventView.search.trim().toLowerCase();
+    if (q){
+      list = list.filter(function(e){
+        return (e.title + ' ' + e.kind + ' ' + e.sport + ' ' + e.notes).toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    // Same rule as the bookings board: soonest first, always.
+    list.sort(function(a,b){ return (a.date+(a.time||'')).localeCompare(b.date+(b.time||'')); });
+    return list;
+  }
+
+  function renderEventStats(){
+    var all = state.events || [];
+    var soon = all.filter(function(e){ var d=daysUntil(e.date); return d>=0 && d<=7; });
+    var big = soon.filter(function(e){ return e.expected==='Busy' || e.expected==='Packed'; }).length;
+    var screens = soon.filter(function(e){ return e.showing; }).length;
+    document.getElementById('eventStats').innerHTML =
+      '<div class="stat"><b class="num">'+all.filter(function(e){return daysUntil(e.date)>=0;}).length+'</b><span>Coming up</span></div>'+
+      '<div class="stat"><b class="num">'+soon.length+'</b><span>Next 7 days</span></div>'+
+      '<div class="stat'+(big?' alert':'')+'"><b class="num">'+big+'</b><span>Busy or packed</span></div>'+
+      '<div class="stat"><b class="num">'+screens+'</b><span>On the screens</span></div>';
+  }
+
+  function renderEventTabs(){
+    var all = state.events || [];
+    var counts = {
+      upcoming: all.filter(function(e){ return daysUntil(e.date)>=0; }).length,
+      all: all.length,
+      past: all.filter(function(e){ return daysUntil(e.date)<0; }).length
+    };
+    var tabs = [['upcoming','Upcoming'], ['all','All'], ['past','Past']];
+    document.getElementById('eventTabs').innerHTML = tabs.map(function(t){
+      return '<button class="tab'+(eventView.tab===t[0]?' active':'')+'" data-etab="'+t[0]+'">'+
+             t[1]+' <span class="n">'+counts[t[0]]+'</span></button>';
+    }).join('');
+  }
+
+  function eventCardHtml(e){
+    var badge = fmtDateBadge(e.date);
+    var open = openEventId === e.id;
+    var time = fmtTime(e.time);
+    var crowd = 'crowd-' + safeStr(e.expected,'Steady').toLowerCase();
+    var isSport = e.kind === 'Sport';
+    var kindLabel = isSport && e.sport ? e.sport : e.kind;
+    var du = daysUntil(e.date);
+    var flag = du === 0 ? '<span class="flag flag-today">Today</span>'
+             : du === 1 ? '<span class="flag flag-soon">Tomorrow</span>'
+             : (du > 1 && du <= 7) ? '<span class="flag flag-week">This week</span>'
+             : du < 0 ? '<span class="flag flag-past">Past</span>' : '';
+    var detail =
+      '<div class="detail-grid">'+
+        '<div><div class="k">When</div><div class="v num">'+fmtDateLong(e.date)+(time?' · '+time:'')+'</div></div>'+
+        '<div><div class="k">Kind</div><div class="v">'+escapeHtml(e.kind)+'</div></div>'+
+        (isSport && e.sport ? '<div><div class="k">Sport</div><div class="v">'+escapeHtml(e.sport)+'</div></div>' : '')+
+        '<div><div class="k">Expected</div><div class="v">'+escapeHtml(safeStr(e.expected,'Steady'))+'</div></div>'+
+        '<div class="detail-full"><div class="k">Screens</div><div class="v">'+
+          (e.showing ? 'Showing it' : 'Not showing it')+'</div></div>'+
+      '</div>'+
+      (e.notes ? '<div class="notes-box">'+escapeHtml(e.notes)+'</div>' : '')+
+      '<div class="card-actions write-only">'+
+        '<button class="btn" data-eedit="'+escapeHtml(e.id)+'" type="button">Edit</button>'+
+        '<button class="btn danger" data-edel="'+escapeHtml(e.id)+'" type="button">Remove</button>'+
+      '</div>';
+    return (
+      '<article class="card'+(open?' open':'')+'" style="--band-color:var(--gold)" data-eid="'+escapeHtml(e.id)+'">'+
+        '<div class="card-head" data-etoggle="'+escapeHtml(e.id)+'">'+
+          '<div class="datebadge"><span class="d num">'+badge.day+'</span><span class="m">'+badge.month+'</span><span class="w">'+badge.weekday+'</span></div>'+
+          '<div class="card-body">'+
+            '<div class="card-toprow">'+
+              '<span class="ev-kind'+(isSport?' sport':'')+'">'+escapeHtml(kindLabel)+'</span>'+
+              '<span class="pill '+crowd+'">'+escapeHtml(safeStr(e.expected,'Steady'))+'</span>'+
+            '</div>'+
+            '<h3 class="card-title">'+escapeHtml(e.title)+'</h3>'+
+            (time ? '<p class="card-when">'+time+'</p>' : '')+
+            '<div class="flags">'+flag+
+              (e.showing ? '<span class="ev-screens">📺 On the screens</span>' : '<span class="ev-off">Not on the screens</span>')+
+            '</div>'+
+          '</div>'+
+        '</div>'+
+        '<div class="card-detail">'+detail+'</div>'+
+      '</article>'
+    );
+  }
+
+  function renderEventList(){
+    var list = visibleEvents();
+    var host = document.getElementById('eventList');
+    if (!list.length){
+      var has = (state.events || []).length;
+      host.innerHTML = '<div class="empty"><b>'+(has ? 'Nothing here' : 'No events yet')+'</b>'+
+        (has ? 'Try a different tab or search.' : 'Tap “+ New event” to put one in.')+'</div>';
+      return;
+    }
+    host.innerHTML = list.map(eventCardHtml).join('');
+  }
+
+  function setMode(next){
+    mode = next;
+    var isEvents = mode === 'events';
+    document.getElementById('bookingsArea').hidden = isEvents;
+    document.getElementById('eventsArea').hidden = !isEvents;
+    document.getElementById('stats').hidden = isEvents;
+    document.getElementById('fabNew').hidden = isEvents;
+    document.getElementById('fabNewEvent').hidden = !isEvents;
+    document.getElementById('modeSwitchLabel').textContent =
+      isEvents ? '← Bookings' : '📅 Upcoming events';
+    document.querySelector('.tool-label').textContent =
+      isEvents ? "What's On" : 'Event Bookings';
+    // The old-events prompt is about bookings; it has no business shouting
+    // over the events board.
+    document.getElementById('staleBanner').hidden = isEvents || !staleBookings().length;
+    renderAll();
+    try{ window.scrollTo(0, 0); }catch(err){}
+  }
+
   function renderAll(){
     renderedDay = todayKey();
     document.getElementById('dateline').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
@@ -1178,6 +1544,10 @@
     renderAreaChips();
     renderLegend();
     renderList();
+    renderEventStats();
+    renderEventTabs();
+    renderEventList();
+    document.getElementById('eventsUnavailable').hidden = TABLE_OK.events;
     renderStorageNote();
     renderStaleList();
     document.body.classList.toggle('read-only', isReadOnly);
@@ -1296,11 +1666,84 @@
     return row;
   }
 
+  function rowToEvent(r){
+    return {
+      id: r.id, date: r.event_date, time: r.event_time || '',
+      title: r.title || '', kind: r.kind || 'Other', sport: r.sport || '',
+      showing: r.showing !== false, expected: r.expected || 'Steady',
+      notes: r.notes || '', source: r.source || 'manual',
+      createdAt: r.created_at, updatedAt: r.updated_at
+    };
+  }
+  function eventToRow(e){
+    return {
+      id: e.id, event_date: e.date, event_time: e.time || null,
+      title: e.title, kind: e.kind, sport: e.sport || null,
+      showing: !!e.showing, expected: e.expected,
+      notes: e.notes || null, source: e.source || 'manual',
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  // The events table arrived after the bookings one, so a database set up
+  // earlier will not have it. Same reasoning as the column probe: ask once,
+  // and if it isn't there say so plainly rather than letting the board look
+  // broken. Bookings carry on regardless.
+  var TABLE_OK = { events: true };
+  var eventsProbed = false;
+  function loadEvents(){
+    return apiFetch('/events?select=*', { method:'GET' }).then(function(rows){
+      TABLE_OK.events = true; eventsProbed = true;
+      state.events = (rows || []).map(rowToEvent);
+    }).catch(function(err){
+      var msg = String((err && err.message) || '');
+      if (msg === 'signed out') throw err;
+      // PostgREST answers a missing table with PGRST205 / "Could not find
+      // the table". Anything else is a dropped connection — try again next load.
+      if (/PGRST205|Could not find the table|does not exist/i.test(msg)){
+        TABLE_OK.events = false; eventsProbed = true;
+      }
+      state.events = state.events || [];
+    });
+  }
+
+  function saveEvents(newEvents, previousEvents, onDone){
+    if (!session){ showAuth('Sign in to save changes.'); if (onDone) onDone(false); return; }
+    if (!TABLE_OK.events){ showToast('The events table isn’t set up yet — see the README.'); if (onDone) onDone(false); return; }
+    var prev = {}, next = {};
+    previousEvents.forEach(function(e){ prev[e.id] = e; });
+    newEvents.forEach(function(e){ next[e.id] = e; });
+    var ops = [];
+    Object.keys(next).forEach(function(id){
+      if (!prev[id]){
+        ops.push(apiFetch('/events', { method:'POST', body: JSON.stringify(eventToRow(next[id])) }));
+      } else if (JSON.stringify(prev[id]) !== JSON.stringify(next[id])){
+        ops.push(apiFetch('/events?id=eq.' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(eventToRow(next[id])) }));
+      }
+    });
+    Object.keys(prev).forEach(function(id){
+      if (!next[id]) ops.push(apiFetch('/events?id=eq.' + encodeURIComponent(id), { method:'DELETE' }));
+    });
+    if (!ops.length){ if (onDone) onDone(true); return; }
+    setSyncing(true);
+    Promise.all(ops).then(function(){
+      setSyncing(false); if (onDone) onDone(true);
+    }).catch(function(err){
+      setSyncing(false);
+      state.events = previousEvents;   // never show this phone a phantom
+      renderAll();
+      if (String(err && err.message) !== 'signed out') showToast('Couldn’t save — check signal and try again.');
+      if (onDone) onDone(false);
+    });
+  }
+
   function loadBookings(){
     return probeColumns().then(function(){
       return apiFetch('/bookings?select=*', { method: 'GET', headers: {} });
     }).then(function(rows){
-      state = { bookings: (rows || []).map(rowToBooking) };
+      state = { bookings: (rows || []).map(rowToBooking), events: state.events || [] };
+      return loadEvents();
+    }).then(function(){
       renderAll();
       return state;
     });
@@ -1866,6 +2309,51 @@
     });
     document.getElementById('termsCopy').addEventListener('click', copyTerms);
 
+    document.getElementById('modeSwitch').addEventListener('click', function(){
+      setMode(mode === 'events' ? 'bookings' : 'events');
+    });
+    document.getElementById('fabNewEvent').addEventListener('click', function(){
+      if (!TABLE_OK.events){ showToast('The events table isn’t set up yet — see the README.'); return; }
+      openEventForm(null);
+    });
+    document.getElementById('eventFormClose').addEventListener('click', function(){ document.getElementById('eventDialog').close(); });
+    document.getElementById('eventFormCancel').addEventListener('click', function(){ document.getElementById('eventDialog').close(); });
+    document.getElementById('eventForm').addEventListener('submit', submitEventForm);
+    document.getElementById('e-kind').addEventListener('change', updateSportVisibility);
+    ['e-title','e-date'].forEach(function(id){
+      document.getElementById(id).addEventListener('input', function(ev){
+        if (ev.target.value.trim()) document.getElementById(id+'-field').classList.remove('invalid');
+      });
+    });
+    document.getElementById('eventTabs').addEventListener('click', function(e){
+      var b = e.target.closest('.tab'); if (!b) return;
+      eventView.tab = b.getAttribute('data-etab');
+      renderEventTabs(); renderEventList();
+    });
+    document.getElementById('eventSearch').addEventListener('input', function(e){
+      eventView.search = e.target.value; renderEventList();
+    });
+    document.getElementById('eventList').addEventListener('click', function(e){
+      var ed = e.target.closest('[data-eedit]');
+      if (ed){ var ev = (state.events||[]).find(function(x){return x.id===ed.getAttribute('data-eedit');});
+               if (ev) openEventForm(ev); return; }
+      var rm = e.target.closest('[data-edel]');
+      if (rm){ pendingEventDelete = rm.getAttribute('data-edel');
+               document.getElementById('eventConfirm').showModal(); return; }
+      var tg = e.target.closest('[data-etoggle]');
+      if (tg){ var id = tg.getAttribute('data-etoggle');
+               openEventId = (openEventId === id) ? null : id;
+               renderEventList(); return; }
+    });
+    document.getElementById('eventConfirmNo').addEventListener('click', function(){
+      pendingEventDelete = null; document.getElementById('eventConfirm').close();
+    });
+    document.getElementById('eventConfirmYes').addEventListener('click', function(){
+      document.getElementById('eventConfirm').close();
+      if (pendingEventDelete) removeEvent(pendingEventDelete);
+      pendingEventDelete = null;
+    });
+
     document.getElementById('fabNew').addEventListener('click', function(){ openForm(null); });
     document.getElementById('formClose').addEventListener('click', closeForm);
     document.getElementById('formCancel').addEventListener('click', closeForm);
@@ -2112,7 +2600,7 @@
     });
     document.getElementById('signOut').addEventListener('click', function(){
       dropSession();
-      state = { bookings: [] };
+      state = { bookings: [], events: [] };
       renderAll();
       showAuth('Signed out.');
     });

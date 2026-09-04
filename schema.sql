@@ -47,3 +47,39 @@ create policy "staff read"   on public.bookings for select to authenticated usin
 create policy "staff insert" on public.bookings for insert to authenticated with check (true);
 create policy "staff update" on public.bookings for update to authenticated using (true) with check (true);
 create policy "staff delete" on public.bookings for delete to authenticated using (true);
+
+
+-- ---------------------------------------------------------------
+--  Upcoming events — what is on in Sydney that fills the venue.
+--  Separate from bookings: nobody books these, we just need to know
+--  they are coming. Safe to run on its own if the bookings table
+--  already exists.
+-- ---------------------------------------------------------------
+create table if not exists public.events (
+  id           text primary key,
+  event_date   date        not null,
+  event_time   text,
+  title        text        not null,
+  kind         text        not null default 'Sport',
+  sport        text,
+  showing      boolean     not null default true,
+  expected     text        not null default 'Steady',
+  notes        text,
+  source       text        not null default 'manual',
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+
+create index if not exists events_event_date_idx on public.events (event_date);
+
+alter table public.events enable row level security;
+
+drop policy if exists "staff read events"   on public.events;
+drop policy if exists "staff insert events" on public.events;
+drop policy if exists "staff update events" on public.events;
+drop policy if exists "staff delete events" on public.events;
+
+create policy "staff read events"   on public.events for select to authenticated using (true);
+create policy "staff insert events" on public.events for insert to authenticated with check (true);
+create policy "staff update events" on public.events for update to authenticated using (true) with check (true);
+create policy "staff delete events" on public.events for delete to authenticated using (true);

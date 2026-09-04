@@ -9,6 +9,9 @@ everyone sees the same sheet the moment it changes.
 - Deposit receipts attach as photos; restaurant bookings skip deposits entirely,
   and any booking can have the deposit waived with a tick
 - Every booking records who took it
+- A second board, **Upcoming events**, tracks what's on in Sydney — NRL, AFL,
+  football, basketball, trivia nights — with the expected crowd and whether
+  it's going on the screens
 
 ---
 
@@ -79,9 +82,14 @@ greyed out, the database is missing a column or two. Add them once:
 
 3. Reload the board. Both are live.
 
-Until you do, everything else keeps working normally — the board just won't
-let anyone use those two fields. (Running the whole of `schema.sql` again does
-the same thing and is equally safe.)
+**The Upcoming events board needs its own table.** If it says the table is
+missing, paste the whole `events` section from the bottom of `schema.sql` into
+the SQL Editor and run it — it creates the table and locks it down the same way
+the bookings one is.
+
+Until you do, everything else keeps working normally — the board just won't let
+anyone use those fields, and bookings are unaffected. (Running the whole of
+`schema.sql` again does all of it and is equally safe.)
 
 ---
 

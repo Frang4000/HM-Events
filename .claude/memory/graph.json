@@ -1,6 +1,6 @@
 {
   "project": "Hotel Maroubra — Function Sheet",
-  "updated": "2026-09-01",
+  "updated": "2026-09-04",
   "entries": [
     {
       "id": "public-repo-no-secrets",
@@ -393,6 +393,36 @@
         "ephemeral-container"
       ],
       "date": "2026-09-01"
+    },
+    {
+      "id": "explicit-display-beats-hidden",
+      "type": "gotcha",
+      "title": "An explicit display beats the hidden attribute",
+      "tags": [
+        "css",
+        "layout"
+      ],
+      "what": "Toggling el.hidden does nothing when the element has its own display rule. .fab, .stats and .tabs each needed an explicit [hidden]{display:none}.",
+      "why": "Bit twice — first on the deposit block, then on the New booking / New event swap, where both buttons showed at once.",
+      "relates_to": [
+        "visually-hidden-overridden"
+      ],
+      "date": "2026-09-04"
+    },
+    {
+      "id": "events-board",
+      "type": "decision",
+      "title": "Events live on their own board and their own table",
+      "tags": [
+        "events",
+        "schema"
+      ],
+      "what": "A top-left switch swaps the whole page between bookings and events. Events are a separate table with no pax, deposit or organiser.",
+      "why": "A booking is something the venue sold; an event is something happening in Sydney that fills the place regardless. Forcing them into one table would have meant half the fields being meaningless on every row.",
+      "relates_to": [
+        "column-probe-pattern"
+      ],
+      "date": "2026-09-04"
     }
   ]
 }
