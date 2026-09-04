@@ -62,13 +62,23 @@ create table if not exists public.events (
   title        text        not null,
   kind         text        not null default 'Sport',
   sport        text,
+  competition  text,
+  channel      text,
   showing      boolean     not null default true,
+  screens      text,
+  sound_on     boolean     not null default false,
   expected     text        not null default 'Steady',
   notes        text,
   source       text        not null default 'manual',
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now()
 );
+
+-- Safe to re-run on an events table made before these were added.
+alter table public.events add column if not exists competition text;
+alter table public.events add column if not exists channel     text;
+alter table public.events add column if not exists screens     text;
+alter table public.events add column if not exists sound_on    boolean not null default false;
 
 create index if not exists events_event_date_idx on public.events (event_date);
 

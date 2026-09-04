@@ -423,6 +423,21 @@
         "column-probe-pattern"
       ],
       "date": "2026-09-04"
+    },
+    {
+      "id": "events-fields",
+      "type": "decision",
+      "title": "What an event records, and what it drops",
+      "tags": [
+        "events",
+        "form"
+      ],
+      "what": "Title, kind, sport, round, date, time, streaming channel, expected crowd, on-the-screens with which screens, sound on, notes. Sport and round only appear on a Sport; which-screens only when it is going on. Anything hidden is cleared on save.",
+      "why": "In a pub the operational questions are which screens and whether the commentary goes through the PA instead of the music — those cause arguments on the night. The channel matters because free-to-air and a subscription we do not have are very different problems.",
+      "relates_to": [
+        "events-board"
+      ],
+      "date": "2026-09-04"
     }
   ]
 }

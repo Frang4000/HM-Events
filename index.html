@@ -831,6 +831,11 @@
         </select>
       </div>
 
+      <div class="field" id="e-comp-field">
+        <label for="e-comp">Round or competition <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+        <input type="text" id="e-comp" placeholder="e.g. Round 24, Finals Week 1, State of Origin II">
+      </div>
+
       <div class="row2">
         <div class="field" id="e-date-field">
           <label for="e-date">Date</label>
@@ -841,6 +846,30 @@
           <label for="e-time">Start <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
           <input type="time" id="e-time">
         </div>
+      </div>
+
+      <div class="field" id="e-channel-field">
+        <label for="e-channel">Streaming or channel <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+        <input type="text" id="e-channel" list="channelList" placeholder="e.g. Fox League, Ch 9, Kayo">
+        <datalist id="channelList">
+          <option value="Channel 9"></option>
+          <option value="9Gem"></option>
+          <option value="Channel 7"></option>
+          <option value="7mate"></option>
+          <option value="Channel 10"></option>
+          <option value="Fox League"></option>
+          <option value="Fox Footy"></option>
+          <option value="Fox Sports"></option>
+          <option value="Kayo"></option>
+          <option value="Stan Sport"></option>
+          <option value="Optus Sport"></option>
+          <option value="Paramount+"></option>
+          <option value="Amazon Prime"></option>
+          <option value="beIN Sports"></option>
+          <option value="ESPN"></option>
+          <option value="Not televised"></option>
+        </datalist>
+        <p class="hint">Worth noting whether it's free-to-air or on a subscription we actually have.</p>
       </div>
 
       <div class="field">
@@ -854,10 +883,24 @@
       </div>
 
       <div class="field">
-        <label>Showing it</label>
+        <label>On the night</label>
         <div class="checkrow">
           <label class="checkopt"><input type="checkbox" id="e-showing" checked> 📺 On the screens</label>
+          <label class="checkopt"><input type="checkbox" id="e-sound"> 🔊 Sound on</label>
         </div>
+        <p class="hint">Sound on means the commentary goes through the PA instead of the music.</p>
+      </div>
+
+      <div class="field" id="e-screens-field">
+        <label for="e-screens">Which screens</label>
+        <select id="e-screens">
+          <option>All screens</option>
+          <option>Front Bar</option>
+          <option>Back Bar</option>
+          <option>Beer Garden</option>
+          <option>Restaurant</option>
+          <option>Front Bar + Back Bar</option>
+        </select>
       </div>
 
       <div class="field">
@@ -1321,9 +1364,20 @@
   }
 
   // ---------------- event form ----------------
-  function updateSportVisibility(){
-    document.getElementById('e-sport-field').hidden =
-      document.getElementById('e-kind').value !== 'Sport';
+  function updateEventFields(){
+    var isSport = document.getElementById('e-kind').value === 'Sport';
+    document.getElementById('e-sport-field').hidden = !isSport;
+    // "Round 24" only means something on a fixture.
+    document.getElementById('e-comp-field').hidden = !isSport;
+    // Nowhere to put it if it isn't going on.
+    document.getElementById('e-screens-field').hidden =
+      !document.getElementById('e-showing').checked;
+    // A database that predates these fields can't store them, so don't
+    // offer them — the note in the events area says why.
+    ['e-comp-field','e-channel-field','e-screens-field'].forEach(function(id){
+      if (!EVENT_EXTRAS_OK) document.getElementById(id).hidden = true;
+    });
+    document.getElementById('e-sound').disabled = !EVENT_EXTRAS_OK;
   }
 
   function openEventForm(ev){
@@ -1342,10 +1396,14 @@
       document.getElementById('e-date').value = safeStr(ev.date, '');
       document.getElementById('e-time').value = safeStr(ev.time, '');
       document.getElementById('e-expected').value = safeStr(ev.expected, 'Steady');
+      document.getElementById('e-comp').value = ev.competition || '';
+      document.getElementById('e-channel').value = ev.channel || '';
       document.getElementById('e-showing').checked = ev.showing !== false;
+      document.getElementById('e-screens').value = safeStr(ev.screens, 'All screens');
+      document.getElementById('e-sound').checked = !!ev.soundOn;
       document.getElementById('e-notes').value = ev.notes || '';
     }
-    updateSportVisibility();
+    updateEventFields();
     document.getElementById('eventDialog').showModal();
   }
 
@@ -1382,7 +1440,13 @@
       // A sport only means something on a sport event — never save one
       // behind the hidden field after the kind was switched.
       sport: kind === 'Sport' ? document.getElementById('e-sport').value : '',
+      competition: kind === 'Sport' ? document.getElementById('e-comp').value.trim() : '',
+      channel: document.getElementById('e-channel').value.trim(),
       showing: document.getElementById('e-showing').checked,
+      // No screens to name if it isn't going on them.
+      screens: document.getElementById('e-showing').checked
+        ? document.getElementById('e-screens').value : '',
+      soundOn: document.getElementById('e-sound').checked,
       expected: document.getElementById('e-expected').value,
       notes: document.getElementById('e-notes').value.trim(),
       source: existing ? (existing.source || 'manual') : 'manual'
@@ -1475,9 +1539,12 @@
         '<div><div class="k">When</div><div class="v num">'+fmtDateLong(e.date)+(time?' · '+time:'')+'</div></div>'+
         '<div><div class="k">Kind</div><div class="v">'+escapeHtml(e.kind)+'</div></div>'+
         (isSport && e.sport ? '<div><div class="k">Sport</div><div class="v">'+escapeHtml(e.sport)+'</div></div>' : '')+
+        (isSport && e.competition ? '<div><div class="k">Round</div><div class="v">'+escapeHtml(e.competition)+'</div></div>' : '')+
+        (e.channel ? '<div><div class="k">On</div><div class="v">'+escapeHtml(e.channel)+'</div></div>' : '')+
         '<div><div class="k">Expected</div><div class="v">'+escapeHtml(safeStr(e.expected,'Steady'))+'</div></div>'+
         '<div class="detail-full"><div class="k">Screens</div><div class="v">'+
-          (e.showing ? 'Showing it' : 'Not showing it')+'</div></div>'+
+          (e.showing ? escapeHtml(safeStr(e.screens,'All screens')) + (e.soundOn ? ' · sound on' : ' · sound off')
+                     : 'Not showing it')+'</div></div>'+
       '</div>'+
       (e.notes ? '<div class="notes-box">'+escapeHtml(e.notes)+'</div>' : '')+
       '<div class="card-actions write-only">'+
@@ -1494,9 +1561,14 @@
               '<span class="pill '+crowd+'">'+escapeHtml(safeStr(e.expected,'Steady'))+'</span>'+
             '</div>'+
             '<h3 class="card-title">'+escapeHtml(e.title)+'</h3>'+
-            (time ? '<p class="card-when">'+time+'</p>' : '')+
+            (time || e.channel
+               ? '<p class="card-when">'+[time, e.channel ? escapeHtml(e.channel) : ''].filter(Boolean).join(' · ')+'</p>'
+               : '')+
             '<div class="flags">'+flag+
-              (e.showing ? '<span class="ev-screens">📺 On the screens</span>' : '<span class="ev-off">Not on the screens</span>')+
+              (e.showing
+                ? '<span class="ev-screens">📺 '+escapeHtml(safeStr(e.screens,'All screens'))+'</span>'
+                : '<span class="ev-off">Not on the screens</span>')+
+              (e.soundOn ? '<span class="ev-screens">🔊 Sound on</span>' : '')+
             '</div>'+
           '</div>'+
         '</div>'+
@@ -1670,19 +1742,45 @@
     return {
       id: r.id, date: r.event_date, time: r.event_time || '',
       title: r.title || '', kind: r.kind || 'Other', sport: r.sport || '',
+      competition: r.competition || '', channel: r.channel || '',
+      screens: r.screens || 'All screens', soundOn: !!r.sound_on,
       showing: r.showing !== false, expected: r.expected || 'Steady',
       notes: r.notes || '', source: r.source || 'manual',
       createdAt: r.created_at, updatedAt: r.updated_at
     };
   }
   function eventToRow(e){
-    return {
+    var row = {
       id: e.id, event_date: e.date, event_time: e.time || null,
       title: e.title, kind: e.kind, sport: e.sport || null,
       showing: !!e.showing, expected: e.expected,
       notes: e.notes || null, source: e.source || 'manual',
       updated_at: new Date().toISOString()
     };
+    // These four arrived after the events table did, so an events table made
+    // from the first version of schema.sql will not have them. Same reasoning
+    // as the bookings column probe — leave them out rather than fail the save.
+    if (EVENT_EXTRAS_OK){
+      row.competition = e.competition || null;
+      row.channel = e.channel || null;
+      row.screens = e.showing ? (e.screens || 'All screens') : null;
+      row.sound_on = !!e.soundOn;
+    }
+    return row;
+  }
+
+  var EVENT_EXTRAS_OK = true, eventExtrasProbed = false;
+  function probeEventExtras(){
+    if (eventExtrasProbed || !TABLE_OK.events) return Promise.resolve();
+    return apiFetch('/events?select=competition,channel,screens,sound_on&limit=1', { method:'GET' })
+      .then(function(){ EVENT_EXTRAS_OK = true; eventExtrasProbed = true; })
+      .catch(function(err){
+        var msg = String((err && err.message) || '');
+        if (msg === 'signed out') throw err;
+        if (/42703|PGRST204|does not exist|Could not find/i.test(msg)){
+          EVENT_EXTRAS_OK = false; eventExtrasProbed = true;
+        }
+      });
   }
 
   // The events table arrived after the bookings one, so a database set up
@@ -1695,6 +1793,7 @@
     return apiFetch('/events?select=*', { method:'GET' }).then(function(rows){
       TABLE_OK.events = true; eventsProbed = true;
       state.events = (rows || []).map(rowToEvent);
+      return probeEventExtras();
     }).catch(function(err){
       var msg = String((err && err.message) || '');
       if (msg === 'signed out') throw err;
@@ -2319,7 +2418,8 @@
     document.getElementById('eventFormClose').addEventListener('click', function(){ document.getElementById('eventDialog').close(); });
     document.getElementById('eventFormCancel').addEventListener('click', function(){ document.getElementById('eventDialog').close(); });
     document.getElementById('eventForm').addEventListener('submit', submitEventForm);
-    document.getElementById('e-kind').addEventListener('change', updateSportVisibility);
+    document.getElementById('e-kind').addEventListener('change', updateEventFields);
+    document.getElementById('e-showing').addEventListener('change', updateEventFields);
     ['e-title','e-date'].forEach(function(id){
       document.getElementById(id).addEventListener('input', function(ev){
         if (ev.target.value.trim()) document.getElementById(id+'-field').classList.remove('invalid');

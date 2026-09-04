@@ -10,8 +10,8 @@ everyone sees the same sheet the moment it changes.
   and any booking can have the deposit waived with a tick
 - Every booking records who took it
 - A second board, **Upcoming events**, tracks what's on in Sydney — NRL, AFL,
-  football, basketball, trivia nights — with the expected crowd and whether
-  it's going on the screens
+  football, basketball, trivia nights — with the round, what it's streaming on,
+  the expected crowd, which screens it's going on and whether the sound is up
 
 ---
 
