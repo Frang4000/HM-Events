@@ -485,6 +485,22 @@
         "explicit-display-beats-hidden"
       ],
       "date": "2026-09-04"
+    },
+    {
+      "id": "dedupe-needs-normalising",
+      "type": "bug",
+      "title": "The same fixture went in twice under two spellings",
+      "tags": [
+        "events",
+        "paste",
+        "dedupe"
+      ],
+      "what": "The paste duplicate check compared titles exactly, so an em dash against a hyphen, and the same game with a note appended, read as two different events. Now punctuation is flattened and one title containing another on the same date counts as the same fixture.",
+      "why": "Caused by handing the same fixtures over twice in two formats whose titles did not match character for character. Whatever generates a paste block must reuse the exact titles already on the board.",
+      "relates_to": [
+        "paste-fixtures"
+      ],
+      "date": "2026-09-04"
     }
   ]
 }

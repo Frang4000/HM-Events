@@ -1566,11 +1566,43 @@
     return fallback;
   }
 
+  // Matching titles exactly was too strict and let the same fixture in twice:
+  // an em dash against a hyphen, or the same game once plain and once with a
+  // "- CHECK KICK-OFF" note on the end, read as two different events. So
+  // punctuation is flattened, and on a given day one title containing another
+  // is taken to be the same fixture — two different games on the same date
+  // don't normally contain one another.
+  function normTitle(t){
+    return String(t || '')
+      .toLowerCase()
+      .replace(/[\u2010-\u2015\u2212]/g, '-')   // every kind of dash
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+  }
+  function sameFixture(aTitle, bTitle){
+    var a = normTitle(aTitle), b = normTitle(bTitle);
+    if (!a || !b) return false;
+    if (a === b) return true;
+    var shorter = a.length <= b.length ? a : b;
+    var longer  = a.length <= b.length ? b : a;
+    // Guard against a short word matching half the board.
+    return shorter.length >= 8 && longer.indexOf(shorter) !== -1;
+  }
+
   function parsePastedFixtures(text){
-    var existing = {};
-    (state.events || []).forEach(function(e){
-      existing[(e.date + '|' + e.title).toLowerCase()] = true;
-    });
+    // date -> titles already on that day, from the board and from this paste
+    var seen = {};
+    function alreadyThere(date, title){
+      var list = seen[date] || [];
+      for (var i = 0; i < list.length; i++){
+        if (sameFixture(list[i], title)) return true;
+      }
+      return false;
+    }
+    function remember(date, title){
+      (seen[date] = seen[date] || []).push(title);
+    }
+    (state.events || []).forEach(function(e){ remember(e.date, e.title); });
     var out = { add: [], dup: [], bad: [] };
     String(text || '').split(/\r?\n/).forEach(function(line, i){
       var raw = line.trim();
@@ -1598,8 +1630,8 @@
         soundOn: /sound|yes|on/i.test(f[8] || ''),
         notes: '', source: 'pasted'
       };
-      if (existing[(ev.date + '|' + ev.title).toLowerCase()]) out.dup.push(ev);
-      else { existing[(ev.date + '|' + ev.title).toLowerCase()] = true; out.add.push(ev); }
+      if (alreadyThere(ev.date, ev.title)) out.dup.push(ev);
+      else { remember(ev.date, ev.title); out.add.push(ev); }
     });
     return out;
   }
