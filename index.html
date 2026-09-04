@@ -126,6 +126,22 @@
   .areaswitch:active{ background:rgba(244,241,226,.2); }
   .topbar{ position:relative; }
 
+  .paste-key{
+    font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:11px; line-height:1.5;
+    background:var(--surface-2); color:var(--ink-soft); border-radius:8px;
+    padding:9px 11px; margin:0 0 13px; overflow-x:auto; white-space:pre;
+  }
+  #pasteText{ font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12px; }
+  .paste-sum{ font-size:13px; margin:0 0 10px; }
+  .paste-sum b{ font-family:'IBM Plex Mono',monospace; }
+  .paste-row{
+    font-size:12.5px; padding:6px 9px; border-radius:7px; margin-bottom:5px;
+    background:var(--surface-2); color:var(--ink);
+  }
+  .paste-row.dup{ color:var(--ink-faint); }
+  .paste-row.bad{ background:var(--danger-soft); color:var(--danger); }
+  #pastePreview{ max-height:210px; overflow-y:auto; margin-bottom:4px; }
+
   .ev-kind{
     display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.05em;
     text-transform:uppercase; padding:3px 8px; border-radius:999px;
@@ -212,9 +228,12 @@
 
   .searchrow{ display:flex; gap:8px; margin:8px 0; }
   .searchrow input{
-    flex:1; border:1px solid var(--line); background:var(--surface); border-radius:9px;
-    padding:9px 12px; color:var(--ink);
+    /* min-width:0 or the input refuses to shrink below its own content and
+       pushes the Paste button off a narrow phone. */
+    flex:1; min-width:0; border:1px solid var(--line); background:var(--surface);
+    border-radius:9px; padding:9px 12px; color:var(--ink);
   }
+  .searchrow .btn{ flex:none; padding:9px 12px; font-size:12.5px; }
   .searchrow input::placeholder{ color:var(--ink-faint); }
 
   .chiprow{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
@@ -594,6 +613,7 @@
       <div class="tabs" id="eventTabs"></div>
       <div class="searchrow">
         <input type="text" id="eventSearch" placeholder="Search events…">
+        <button class="btn write-only" id="pasteOpen" type="button" title="Paste a week of fixtures">📋 Paste</button>
       </div>
     </div>
     <p class="deposit-note" id="eventsUnavailable" hidden style="margin:0 14px 12px;">
@@ -913,6 +933,27 @@
         <button type="submit" class="btn primary" id="eventFormSave">Save event</button>
       </div>
     </form>
+  </div>
+</dialog>
+
+<dialog id="pasteDialog">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2>Paste fixtures</h2>
+      <button class="closex" id="pasteClose" type="button" aria-label="Close">✕</button>
+    </div>
+    <p class="terms-intro">One event per line, separated by <code>|</code>. Only the
+      date and the name are needed — leave the rest off and sensible defaults are used.</p>
+    <pre class="paste-key">date | time | what's on | sport | round | channel | crowd | screens | sound</pre>
+    <div class="field">
+      <textarea id="pasteText" rows="8" placeholder="2026-09-04 | 20:00 | Rabbitohs v Roosters | NRL | Round 27 | Nine + Fox League | Packed | All screens | sound
+2026-09-06 | 16:05 | Panthers v Wests Tigers | NRL | Round 27 | Fox League | Busy"></textarea>
+    </div>
+    <div id="pastePreview"></div>
+    <div class="dialog-foot">
+      <button type="button" class="btn" id="pasteCancel">Cancel</button>
+      <button type="button" class="btn primary" id="pasteImport" disabled>Add them</button>
+    </div>
   </div>
 </dialog>
 
@@ -1477,6 +1518,136 @@
     saveEvents(next, previous, function(){});
   }
 
+  // ---------------- pasting a week of fixtures ----------------
+  // Typing twelve games in by hand on a phone is the sort of chore that stops
+  // a board being kept up to date, so a week arrives as one paste. The parser
+  // is deliberately forgiving: anything after the name is optional, and a line
+  // it cannot read is reported rather than silently dropped.
+  var CROWDS = ['Quiet','Steady','Busy','Packed'];
+  var SCREEN_CHOICES = ['All screens','Front Bar','Back Bar','Beer Garden','Restaurant','Front Bar + Back Bar'];
+
+  function parsePastedDate(raw){
+    var t = String(raw || '').trim();
+    var m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
+    if (m) return m[1] + '-' + pad2(m[2]) + '-' + pad2(m[3]);
+    // 4/9 or 4/9/26 or 4/9/2026 — day first, as written here.
+    m = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?$/.exec(t);
+    if (m){
+      var y = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : String(new Date().getFullYear());
+      return y + '-' + pad2(m[2]) + '-' + pad2(m[1]);
+    }
+    return '';
+  }
+  function pad2(v){ v = String(parseInt(v,10)); return v.length < 2 ? '0'+v : v; }
+
+  function parsePastedTime(raw){
+    var t = String(raw || '').trim().toLowerCase().replace(/\s+/g,'');
+    if (!t) return '';
+    var m = /^(\d{1,2})[:.](\d{2})(am|pm)?$/.exec(t) || /^(\d{1,2})(am|pm)$/.exec(t);
+    if (!m) return '';
+    var h = parseInt(m[1],10);
+    var mins = m[2] && /^\d{2}$/.test(m[2]) ? parseInt(m[2],10) : 0;
+    var ap = m[3] || (m[2] && !/^\d{2}$/.test(m[2]) ? m[2] : '');
+    if (ap === 'pm' && h < 12) h += 12;
+    if (ap === 'am' && h === 12) h = 0;
+    if (h > 23 || mins > 59) return '';
+    return pad2(h) + ':' + pad2(mins);
+  }
+
+  function pickFrom(list, raw, fallback){
+    var t = String(raw || '').trim().toLowerCase();
+    if (!t) return fallback;
+    for (var i = 0; i < list.length; i++){
+      if (list[i].toLowerCase() === t) return list[i];
+    }
+    for (var j = 0; j < list.length; j++){
+      if (list[j].toLowerCase().indexOf(t) === 0) return list[j];
+    }
+    return fallback;
+  }
+
+  function parsePastedFixtures(text){
+    var existing = {};
+    (state.events || []).forEach(function(e){
+      existing[(e.date + '|' + e.title).toLowerCase()] = true;
+    });
+    var out = { add: [], dup: [], bad: [] };
+    String(text || '').split(/\r?\n/).forEach(function(line, i){
+      var raw = line.trim();
+      if (!raw || raw.charAt(0) === '#') return;
+      var f = raw.split('|').map(function(x){ return x.trim(); });
+      var date = parsePastedDate(f[0]);
+      var title = (f[2] || '').trim();
+      if (!date || !title){
+        out.bad.push({ line: i + 1, text: raw,
+          why: !date ? 'no date I could read' : 'no name' });
+        return;
+      }
+      var sport = (f[3] || '').trim();
+      var screensRaw = (f[7] || '').trim();
+      var showing = !/^(no|off|none|not showing)$/i.test(screensRaw);
+      var ev = {
+        id: uid(),
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        date: date, time: parsePastedTime(f[1]), title: title,
+        kind: sport ? 'Sport' : 'Other',
+        sport: sport, competition: (f[4] || '').trim(), channel: (f[5] || '').trim(),
+        expected: pickFrom(CROWDS, f[6], 'Steady'),
+        showing: showing,
+        screens: showing ? pickFrom(SCREEN_CHOICES, screensRaw, 'All screens') : '',
+        soundOn: /sound|yes|on/i.test(f[8] || ''),
+        notes: '', source: 'pasted'
+      };
+      if (existing[(ev.date + '|' + ev.title).toLowerCase()]) out.dup.push(ev);
+      else { existing[(ev.date + '|' + ev.title).toLowerCase()] = true; out.add.push(ev); }
+    });
+    return out;
+  }
+
+  var pasteParsed = null;
+  function renderPastePreview(){
+    var host = document.getElementById('pastePreview');
+    var btn = document.getElementById('pasteImport');
+    pasteParsed = parsePastedFixtures(document.getElementById('pasteText').value);
+    var n = pasteParsed.add.length;
+    if (!n && !pasteParsed.dup.length && !pasteParsed.bad.length){
+      host.innerHTML = ''; btn.disabled = true; return;
+    }
+    var bits = ['<p class="paste-sum"><b>'+n+'</b> to add'];
+    if (pasteParsed.dup.length) bits.push(', <b>'+pasteParsed.dup.length+'</b> already on the board');
+    if (pasteParsed.bad.length) bits.push(', <b>'+pasteParsed.bad.length+'</b> I couldn\u2019t read');
+    bits.push('</p>');
+    host.innerHTML = bits.join('') +
+      pasteParsed.add.map(function(e){
+        return '<div class="paste-row">'+escapeHtml(fmtDateLong(e.date))+
+          (e.time ? ' · '+escapeHtml(fmtTime(e.time)) : '')+' — '+escapeHtml(e.title)+'</div>';
+      }).join('') +
+      pasteParsed.dup.map(function(e){
+        return '<div class="paste-row dup">Already there: '+escapeHtml(e.title)+'</div>';
+      }).join('') +
+      pasteParsed.bad.map(function(b){
+        return '<div class="paste-row bad">Line '+b.line+' — '+escapeHtml(b.why)+': '+escapeHtml(b.text.slice(0,60))+'</div>';
+      }).join('');
+    btn.disabled = n === 0;
+  }
+
+  function importPastedFixtures(){
+    if (!pasteParsed || !pasteParsed.add.length) return;
+    if (!TABLE_OK.events){ showToast('The events table isn\u2019t set up yet — see the README.'); return; }
+    var previous = (state.events || []).slice();
+    var next = previous.concat(pasteParsed.add);
+    var n = pasteParsed.add.length;
+    state.events = next;
+    document.getElementById('pasteDialog').close();
+    document.getElementById('pasteText').value = '';
+    document.getElementById('pastePreview').innerHTML = '';
+    pasteParsed = null;
+    renderAll();
+    saveEvents(next, previous, function(okDone){
+      if (okDone) showToast('Added ' + n + ' event' + (n === 1 ? '' : 's') + '.');
+    });
+  }
+
   // ---------------- events board ----------------
   function visibleEvents(){
     var list = (state.events || []).slice();
@@ -1794,6 +1965,8 @@
       TABLE_OK.events = true; eventsProbed = true;
       state.events = (rows || []).map(rowToEvent);
       return probeEventExtras();
+    }).then(function(){
+      pruneFinishedEvents();
     }).catch(function(err){
       var msg = String((err && err.message) || '');
       if (msg === 'signed out') throw err;
@@ -1804,6 +1977,35 @@
       }
       state.events = state.events || [];
     });
+  }
+
+  // An event is a heads-up, not a record — once the game has been and gone it
+  // is clutter on a board people scan mid-shift, so it clears itself. Bookings
+  // are the opposite and are never removed without someone saying so.
+  var EVENT_KEEP_HOURS = 2;
+  function eventStartsAt(e){
+    if (!e || !e.date) return null;
+    var d = parseYMD(e.date);
+    if (isNaN(d)) return null;
+    var m = /^(\d{1,2}):(\d{2})$/.exec(String(e.time || ''));
+    // No start time given, so treat it as running to the end of its day
+    // rather than clearing at midnight the moment the date arrives.
+    if (m) d.setHours(parseInt(m[1],10), parseInt(m[2],10), 0, 0);
+    else d.setHours(23, 59, 0, 0);
+    return d;
+  }
+  function pruneFinishedEvents(){
+    if (!session || isReadOnly || !TABLE_OK.events) return;
+    var cutoff = Date.now() - EVENT_KEEP_HOURS * 3600 * 1000;
+    var previous = (state.events || []).slice();
+    var next = previous.filter(function(e){
+      var t = eventStartsAt(e);
+      return !t || t.getTime() > cutoff;   // unparseable date: leave it alone
+    });
+    if (next.length === previous.length) return;
+    state.events = next;
+    renderAll();
+    saveEvents(next, previous, function(){});
   }
 
   function saveEvents(newEvents, previousEvents, onDone){
@@ -2425,6 +2627,16 @@
         if (ev.target.value.trim()) document.getElementById(id+'-field').classList.remove('invalid');
       });
     });
+    document.getElementById('pasteOpen').addEventListener('click', function(){
+      if (!TABLE_OK.events){ showToast('The events table isn\u2019t set up yet — see the README.'); return; }
+      renderPastePreview();
+      document.getElementById('pasteDialog').showModal();
+    });
+    document.getElementById('pasteClose').addEventListener('click', function(){ document.getElementById('pasteDialog').close(); });
+    document.getElementById('pasteCancel').addEventListener('click', function(){ document.getElementById('pasteDialog').close(); });
+    document.getElementById('pasteText').addEventListener('input', renderPastePreview);
+    document.getElementById('pasteImport').addEventListener('click', importPastedFixtures);
+
     document.getElementById('eventTabs').addEventListener('click', function(e){
       var b = e.target.closest('.tab'); if (!b) return;
       eventView.tab = b.getAttribute('data-etab');

@@ -438,6 +438,53 @@
         "events-board"
       ],
       "date": "2026-09-04"
+    },
+    {
+      "id": "events-self-clear",
+      "type": "decision",
+      "title": "Events clear themselves two hours after they start",
+      "tags": [
+        "events",
+        "data"
+      ],
+      "what": "pruneFinishedEvents() runs after every load and deletes events more than EVENT_KEEP_HOURS past their start. One with no time survives to the end of its day. An unparseable date is left alone.",
+      "why": "An explicit exception to never-auto-delete, and the reason the two differ: a booking is a commercial record, an event is a heads-up that is pure clutter once the game has been and gone.",
+      "relates_to": [
+        "never-auto-delete",
+        "events-board"
+      ],
+      "date": "2026-09-04"
+    },
+    {
+      "id": "paste-fixtures",
+      "type": "decision",
+      "title": "A week of fixtures arrives as one paste, not as SQL",
+      "tags": [
+        "events",
+        "workflow"
+      ],
+      "what": "The Paste button takes pipe-separated lines, previews what it found, flags unreadable lines and skips duplicates by date+title.",
+      "why": "Supabase is unreachable from the build session, so research could only be handed over as SQL to paste into the dashboard. That is a poor weekly chore. This keeps it inside the app on a phone, and goes through the normal save path so RLS still applies.",
+      "relates_to": [
+        "network-blocks-supabase",
+        "events-board"
+      ],
+      "date": "2026-09-04"
+    },
+    {
+      "id": "flex-item-min-width",
+      "type": "gotcha",
+      "title": "A flex item will not shrink below its own content",
+      "tags": [
+        "css",
+        "layout"
+      ],
+      "what": "Adding a button beside the search input overflowed at 320px until the input got min-width:0.",
+      "why": "min-width:auto is the default on a flex item. Caught only by the width audit, not by looking at it.",
+      "relates_to": [
+        "explicit-display-beats-hidden"
+      ],
+      "date": "2026-09-04"
     }
   ]
 }

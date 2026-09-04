@@ -93,6 +93,33 @@ anyone use those fields, and bookings are unaffected. (Running the whole of
 
 ---
 
+## Keeping the events board fed
+
+**Pasting a week in.** On the events board, tap **📋 Paste**. One event per line:
+
+```
+date | time | what's on | sport | round | channel | crowd | screens | sound
+2026-09-04 | 20:00 | Rabbitohs v Roosters | NRL | Round 27 | Nine + Fox League | Packed | All screens | sound
+2026-09-06 | 4:05pm | Panthers v Wests Tigers | NRL | Round 27 | Fox League | Busy
+2026-09-08 | 7pm | Trivia night
+```
+
+Only the date and the name are needed; everything after them is optional. Dates
+can be `2026-09-04` or `4/9`; times can be `20:00`, `8pm` or `4:05pm`. Lines
+starting with `#` are ignored. It shows what it found before adding anything,
+flags any line it couldn't read, and skips events already on the board — so
+pasting the same list twice is harmless.
+
+**Events clear themselves two hours after they start.** A finished game is
+clutter on a board people scan mid-shift. An event with no start time survives
+until the end of its day. This applies only to events — **bookings are never
+removed on their own**, which is deliberate and shouldn't change.
+
+To keep them longer, change `EVENT_KEEP_HOURS` near the top of the events code
+in `index.html`.
+
+---
+
 ## Security
 
 **The key in `config.js` is meant to be public.** Supabase calls it the
