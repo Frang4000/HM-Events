@@ -240,7 +240,7 @@
   .chip{
     border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
     padding:7px 12px; border-radius:999px; font-size:12.5px; font-weight:500; cursor:pointer;
-    min-height:34px;
+    min-height:40px;
   }
   .chip.on{ background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent); }
 
@@ -615,6 +615,7 @@
         <input type="text" id="eventSearch" placeholder="Search events…">
         <button class="btn write-only" id="pasteOpen" type="button" title="Paste a week of fixtures">📋 Paste</button>
       </div>
+      <div class="chiprow" id="sportChips"></div>
     </div>
     <p class="deposit-note" id="eventsUnavailable" hidden style="margin:0 14px 12px;">
       The events list needs its table adding to the database — see “Adding the newer
@@ -1023,6 +1024,12 @@
 
 
   var AREAS = ["Front Bar","Back Bar","Whole Venue","Restaurant","Beer Garden + Restaurant"];
+  // Buckets for the events board's sport chips. "Soccer" also catches the
+  // e-sport dropdown's "Football (A-League)" / "Football (international)" —
+  // one button for what the venue calls one thing two different ways.
+  // Anything that isn't Sport, or is a sport with no button of its own
+  // (cricket, rugby union, boxing/UFC…), falls into Other rather than vanishing.
+  var SPORT_FILTERS = ['NRL','AFL','Soccer','Other'];
   var PRIORITY_ORDER = {Urgent:0, High:1, Medium:2, Low:3};
   var STATUSES = ['Enquiry','Confirmed','Deposit Paid','Deposit Refunded','Completed','Cancelled'];
   // Meaningless on a booking that isn't taking a deposit, so they come out
@@ -1158,7 +1165,7 @@
   // something we sold, an event is something happening in Sydney that will
   // fill the place whether we like it or not.
   var mode = 'bookings';
-  var eventView = { tab: 'upcoming', search: '' };
+  var eventView = { tab: 'upcoming', search: '', sports: [] };
   var openEventId = null;
   var isReadOnly = false;
   var openCardId = null;
@@ -1681,12 +1688,26 @@
   }
 
   // ---------------- events board ----------------
+  function eventSportBucket(e){
+    if (e.kind !== 'Sport') return 'Other';
+    var s = String(e.sport || '').trim().toLowerCase();
+    if (s.indexOf('nrl') === 0) return 'NRL';
+    if (s.indexOf('afl') === 0) return 'AFL';
+    if (s.indexOf('football') === 0 || s === 'soccer') return 'Soccer';
+    return 'Other';
+  }
+
   function visibleEvents(){
     var list = (state.events || []).slice();
     if (eventView.tab === 'upcoming'){
       list = list.filter(function(e){ return daysUntil(e.date) >= 0; });
     } else if (eventView.tab === 'past'){
       list = list.filter(function(e){ return daysUntil(e.date) < 0; });
+    }
+    // Same rule as the area chips: ticking a sport widens the list, it
+    // doesn't narrow it — none ticked shows everything.
+    if (eventView.sports.length){
+      list = list.filter(function(e){ return eventView.sports.indexOf(eventSportBucket(e)) !== -1; });
     }
     var q = eventView.search.trim().toLowerCase();
     if (q){
@@ -1722,6 +1743,13 @@
     document.getElementById('eventTabs').innerHTML = tabs.map(function(t){
       return '<button class="tab'+(eventView.tab===t[0]?' active':'')+'" data-etab="'+t[0]+'">'+
              t[1]+' <span class="n">'+counts[t[0]]+'</span></button>';
+    }).join('');
+  }
+
+  function renderSportChips(){
+    document.getElementById('sportChips').innerHTML = SPORT_FILTERS.map(function(s){
+      var on = eventView.sports.indexOf(s) !== -1 ? ' on' : '';
+      return '<button class="chip'+on+'" data-sport="'+escapeHtml(s)+'">'+escapeHtml(s)+'</button>';
     }).join('');
   }
 
@@ -1821,6 +1849,7 @@
     renderList();
     renderEventStats();
     renderEventTabs();
+    renderSportChips();
     renderEventList();
     document.getElementById('eventsUnavailable').hidden = TABLE_OK.events;
     renderStorageNote();
@@ -2673,6 +2702,13 @@
       var b = e.target.closest('.tab'); if (!b) return;
       eventView.tab = b.getAttribute('data-etab');
       renderEventTabs(); renderEventList();
+    });
+    document.getElementById('sportChips').addEventListener('click', function(e){
+      var btn = e.target.closest('.chip'); if (!btn) return;
+      var s = btn.getAttribute('data-sport');
+      var i = eventView.sports.indexOf(s);
+      if (i===-1) eventView.sports.push(s); else eventView.sports.splice(i,1);
+      renderSportChips(); renderEventList();
     });
     document.getElementById('eventSearch').addEventListener('input', function(e){
       eventView.search = e.target.value; renderEventList();
