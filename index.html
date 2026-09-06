@@ -689,10 +689,13 @@
   .auth-note code{ color:var(--gold); font-family:'IBM Plex Mono',monospace; }
 
   .sync-dot{
-    position:fixed; top:10px; right:12px; z-index:30;
+    /* Centred under the bar: top-right now belongs to Settings. */
+    position:fixed; top:66px; left:50%; transform:translateX(-50%); z-index:30;
     background:var(--gold); color:var(--brand-green-deep); font-size:10.5px; font-weight:700;
-    padding:4px 10px; border-radius:999px; letter-spacing:.04em;
+    padding:4px 10px; border-radius:999px; letter-spacing:.04em; white-space:nowrap;
+    box-shadow:0 4px 14px -6px rgba(0,0,0,.5);
   }
+  .sync-dot.stalled{ background:var(--danger); color:#fff; }
   .sync-dot[hidden]{ display:none; }
   .signout{
     background:none; border:none; color:var(--ink-faint); font-size:10.5px;
@@ -810,15 +813,17 @@
     min-height:64px; padding:10px 12px; border-radius:14px; text-align:left;
     display:flex; flex-direction:column; justify-content:center; gap:2px;
   }
-  .stat{ cursor:pointer; font:inherit; color:inherit; width:100%;
+  /* Only the bookings tiles are buttons. Left unscoped, these made the
+     events board's four plain tiles look like they would do something. */
+  button.stat{ cursor:pointer; font:inherit; color:inherit; width:100%;
     transition:border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease); }
   .stat.picked{ outline:2px solid var(--accent); outline-offset:-2px; }
   .stat.picked.alert{ outline-color:var(--warn); }
   .stat.picked.urgent{ outline-color:var(--danger); }
   @media (hover:hover) and (pointer:fine){
-    .stat:hover{ border-color:var(--line-strong); }
+    button.stat:hover{ border-color:var(--line-strong); }
   }
-  .stat:active{ transform:scale(.985); }
+  button.stat:active{ transform:scale(.985); }
   .stat b.num{ font-size:24px; }
   .stat span{ font-size:12px; }
 
@@ -1614,7 +1619,10 @@
     var parts = String(hhmm).split(':');
     var h = parseInt(parts[0], 10);
     var m = parseInt(parts[1], 10);
-    if (isNaN(h) || isNaN(m)) return String(hhmm);
+    // Never hand the stored text back. Every path the app controls writes
+    // HH:MM, so an unparseable value is not a time — and it used to travel
+    // straight into markup from the tonight strip and the rail.
+    if (isNaN(h) || isNaN(m)) return '';
     var suffix = h < 12 ? 'am' : 'pm';
     var h12 = h % 12; if (h12 === 0) h12 = 12;
     return h12 + ':' + (m < 10 ? '0' + m : m) + suffix;
@@ -1881,7 +1889,7 @@
 
     var detail =
       '<div class="detail-grid">'+
-        '<div><div class="k">Date</div><div class="v num">'+fmtDateLong(b.date)+(timeText?' · '+timeText:'')+'</div></div>'+
+        '<div><div class="k">Date</div><div class="v num">'+fmtDateLong(b.date)+(timeText?' · '+escapeHtml(timeText):'')+'</div></div>'+
         '<div><div class="k">Area</div><div class="v">'+escapeHtml(area)+'</div></div>'+
         '<div><div class="k">Pax</div><div class="v num">'+escapeHtml(b.pax)+' — '+band.label+'</div></div>'+
         '<div><div class="k">Deposit</div><div class="v">'+(needsDeposit ? (b.depositAmount?escapeHtml(b.depositAmount):'—') : 'Not required')+'</div></div>'+
@@ -1894,13 +1902,13 @@
       (b.notes ? '<div class="notes-box">'+escapeHtml(b.notes)+'</div>' : '')+
       depositSection+
       '<div class="card-actions write-only">'+
-        '<button class="btn" data-edit="'+b.id+'" type="button">Edit</button>'+
-        '<button class="btn danger" data-delete="'+b.id+'" type="button">Delete</button>'+
+        '<button class="btn" data-edit="'+escapeHtml(b.id)+'" type="button">Edit</button>'+
+        '<button class="btn danger" data-delete="'+escapeHtml(b.id)+'" type="button">Delete</button>'+
       '</div>';
 
     return (
-      '<article class="card'+(open?' open':'')+'" style="--band-color:'+band.bg+'" data-id="'+b.id+'">'+
-        '<div class="card-head" data-toggle="'+b.id+'">'+
+      '<article class="card'+(open?' open':'')+'" style="--band-color:'+band.bg+'" data-id="'+escapeHtml(b.id)+'">'+
+        '<div class="card-head" data-toggle="'+escapeHtml(b.id)+'">'+
           '<div class="datebadge when">'+(timeText
               ? '<b class="t num">'+escapeHtml(timeText)+'</b>'
               : '<b class="t num">—</b>')+'<span class="w">'+badge.weekday+'</span></div>'+
@@ -2327,7 +2335,10 @@
     var badge = fmtDateBadge(e.date);
     var open = openEventId === e.id;
     var time = fmtTime(e.time);
-    var crowd = 'crowd-' + safeStr(e.expected,'Steady').toLowerCase();
+    // Escaping cannot save a class name, so the value has to be one we
+    // already know. Anything else is drawn as Steady.
+    var expected = CROWDS.indexOf(e.expected) !== -1 ? e.expected : 'Steady';
+    var crowd = 'crowd-' + expected.toLowerCase();
     var isSport = e.kind === 'Sport';
     var kindLabel = isSport && e.sport ? e.sport : e.kind;
     var du = daysUntil(e.date);
@@ -2337,7 +2348,7 @@
              : du < 0 ? '<span class="flag flag-past">Past</span>' : '';
     var detail =
       '<div class="detail-grid">'+
-        '<div><div class="k">When</div><div class="v num">'+fmtDateLong(e.date)+(time?' · '+time:'')+'</div></div>'+
+        '<div><div class="k">When</div><div class="v num">'+fmtDateLong(e.date)+(time?' · '+escapeHtml(time):'')+'</div></div>'+
         '<div><div class="k">Kind</div><div class="v">'+escapeHtml(e.kind)+'</div></div>'+
         (isSport && e.sport ? '<div><div class="k">Sport</div><div class="v">'+escapeHtml(e.sport)+'</div></div>' : '')+
         (isSport && e.competition ? '<div><div class="k">Round</div><div class="v">'+escapeHtml(e.competition)+'</div></div>' : '')+
@@ -2361,7 +2372,7 @@
           '<div class="card-body">'+
             '<div class="card-toprow">'+
               '<span class="ev-kind'+(isSport?' sport':'')+'">'+escapeHtml(kindLabel)+'</span>'+
-              '<span class="pill '+crowd+'">'+escapeHtml(safeStr(e.expected,'Steady'))+'</span>'+
+              '<span class="pill '+crowd+'">'+escapeHtml(expected)+'</span>'+
             '</div>'+
             '<h3 class="card-title">'+escapeHtml(e.title)+'</h3>'+
             (e.channel ? '<p class="card-when">'+escapeHtml(e.channel)+'</p>' : '')+
@@ -2445,7 +2456,7 @@
     if (b.hasStage) extras.push('Stage');
     if (b.status) extras.push(escapeHtml(b.status));
     if (b.takenBy) extras.push('Taken by '+escapeHtml(b.takenBy));
-    return '<li><time>'+(fmtTime(b.time) || '—')+'</time><div><b>'+
+    return '<li><time>'+escapeHtml(fmtTime(b.time) || '—')+'</time><div><b>'+
       (b.organiser ? escapeHtml(b.organiser) : escapeHtml(safeStr(b.area,'Booking')))+'</b> · '+
       bits.join(' · ')+
       (extras.length ? '<div class="sub">'+extras.join(' · ')+'</div>' : '')+
@@ -2480,7 +2491,7 @@
     var tonightHtml = tonight.length
       ? '<ul>'+tonight.map(function(b){
           return '<li><span class="dot" style="background:'+sizeBand(b.pax).bg+'"></span><div><b>'+
-            (fmtTime(b.time) || '—')+' '+(b.organiser ? escapeHtml(b.organiser) : escapeHtml(safeStr(b.area,'Booking')))+
+            escapeHtml(fmtTime(b.time) || '—')+' '+(b.organiser ? escapeHtml(b.organiser) : escapeHtml(safeStr(b.area,'Booking')))+
             '</b><div class="sub">'+escapeHtml(safeStr(b.area,''))+' · '+escapeHtml(b.pax)+' pax</div></div></li>';
         }).join('')+'</ul>'
       : '<p class="none">Nothing booked in tonight.</p>';
@@ -2495,10 +2506,14 @@
     var onHtml = soon.length
       ? '<ul>'+soon.map(function(e){
           return '<li><span class="dot" style="background:var(--gold)"></span><div>'+escapeHtml(e.title)+
-            '<div class="sub">'+[relativeDay(e.date) || dayHeading(e.date), fmtTime(e.time),
+            '<div class="sub">'+[relativeDay(e.date) || dayHeading(e.date), escapeHtml(fmtTime(e.time)),
               e.channel ? escapeHtml(e.channel) : ''].filter(Boolean).join(' · ')+'</div></div></li>';
         }).join('')+'</ul>'
-      : '<p class="none">Nothing added yet.</p>';
+      : (TABLE_OK.events
+          ? '<p class="none">Nothing added yet.</p>'
+          // The probe pattern applies to what is drawn, not only to what is
+          // written: the rail used to call a missing table an empty list.
+          : '<p class="none">The events list needs its table adding — see the README.</p>');
 
     rail.innerHTML = panel('On tonight', tonightHtml) +
                      panel('Deposits to chase', chaseHtml) +
@@ -2547,6 +2562,15 @@
     try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch(e){}
   }
   function dropSession(){
+    // Tell Supabase to revoke it too. Without this the refresh token stays
+    // usable until it expires, so a copy taken from a shared handset keeps
+    // working after the manager believes they have signed out.
+    if (session && session.access_token){
+      try {
+        fetch(AUTH + '/logout', { method: 'POST', headers: authHeaders() })
+          .catch(function(){});
+      } catch(e){}
+    }
     session = null;
     try { localStorage.removeItem(SESSION_KEY); } catch(e){}
   }
@@ -2595,7 +2619,14 @@
     };
     return send().then(function(res){
       if (res.status === 401 && session && session.refresh_token){
-        return refreshSession().then(send);
+        // If the refresh itself fails the session is gone for good. Without
+        // this the rejection skipped the sign-out branch below and the
+        // manager was told to check the wifi for a dead password.
+        return refreshSession().then(send, function(){
+          dropSession();
+          showAuth('Signed out — enter the staff password again.');
+          throw new Error('signed out');
+        });
       }
       return res;
     }).then(function(res){
@@ -2615,7 +2646,11 @@
       depositAmount: r.deposit_amount || '', notes: r.notes || '',
       noDeposit: !!r.no_deposit, tablePref: r.table_pref || '',
       hasDJ: !!r.has_dj, hasStage: !!r.has_stage,
-      payments: r.payments || [], refunds: r.refunds || [],
+      // jsonb has no shape, and a row written straight over the API can put
+      // anything here. A string is truthy but has no .map, which threw
+      // inside the render and left the board stuck on "Loading the sheet".
+      payments: Array.isArray(r.payments) ? r.payments : [],
+      refunds:  Array.isArray(r.refunds)  ? r.refunds  : [],
       createdAt: r.created_at, updatedAt: r.updated_at
     };
   }
@@ -2748,7 +2783,11 @@
       if (!prev[id]){
         ops.push(apiFetch('/events', { method:'POST', body: JSON.stringify(eventToRow(next[id])) }));
       } else if (JSON.stringify(prev[id]) !== JSON.stringify(next[id])){
-        ops.push(apiFetch('/events?id=eq.' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(eventToRow(next[id])) }));
+        var edelta = changedFields(eventToRow(prev[id]), eventToRow(next[id]));
+        if (Object.keys(edelta).length){
+          edelta.updated_at = new Date().toISOString();
+          ops.push(apiFetch('/events?id=eq.' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(edelta) }));
+        }
       }
     });
     Object.keys(prev).forEach(function(id){
@@ -2789,6 +2828,18 @@
   // re-rendered; this works out what actually differs from the previous
   // state and sends only those rows. One shape covers add, edit, delete
   // and the bulk "clear all" from the old-events dialog.
+  // Send only what actually changed. A full-row PATCH quietly put back
+  // every other field as this phone last saw it, so a deposit another
+  // manager had just marked paid went back to unpaid with nobody told.
+  function changedFields(prevRow, nextRow){
+    var out = {};
+    Object.keys(nextRow).forEach(function(k){
+      if (k === 'updated_at') return;
+      if (JSON.stringify(prevRow[k]) !== JSON.stringify(nextRow[k])) out[k] = nextRow[k];
+    });
+    return out;
+  }
+
   function saveState(newState, previousState, onDone){
     if (!session){ showAuth('Sign in to save changes.'); if (onDone) onDone(false); return; }
     var prev = {}, next = {};
@@ -2800,7 +2851,11 @@
       if (!prev[id]){
         ops.push(apiFetch('/bookings', { method: 'POST', body: JSON.stringify(bookingToRow(next[id])) }));
       } else if (JSON.stringify(prev[id]) !== JSON.stringify(next[id])){
-        ops.push(apiFetch('/bookings?id=eq.' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify(bookingToRow(next[id])) }));
+        var delta = changedFields(bookingToRow(prev[id]), bookingToRow(next[id]));
+        if (Object.keys(delta).length){
+          delta.updated_at = new Date().toISOString();
+          ops.push(apiFetch('/bookings?id=eq.' + encodeURIComponent(id), { method: 'PATCH', body: JSON.stringify(delta) }));
+        }
       }
     });
     Object.keys(prev).forEach(function(id){
@@ -2833,8 +2888,24 @@
     setTimeout(function(){ t.remove(); }, 3600);
   }
 
-  function setSyncing(on){
-    document.getElementById('syncDot').hidden = !on;
+  // "Saving…" and "not refreshing" share one small pill. A board frozen on
+  // bad pub wifi used to look exactly like a board with nothing new on it.
+  var syncState = { saving: false, failures: 0 };
+  function paintSyncDot(){
+    var el = document.getElementById('syncDot');
+    if (syncState.saving){
+      el.textContent = 'Saving…'; el.classList.remove('stalled'); el.hidden = false;
+    } else if (syncState.failures >= 2){
+      el.textContent = 'Not refreshing — check signal';
+      el.classList.add('stalled'); el.hidden = false;
+    } else {
+      el.hidden = true;
+    }
+  }
+  function setSyncing(on){ syncState.saving = !!on; paintSyncDot(); }
+  function notePoll(ok){
+    syncState.failures = ok ? 0 : syncState.failures + 1;
+    paintSyncDot();
   }
 
   // Someone else's booking should turn up without anyone reloading.
@@ -2842,7 +2913,8 @@
   // Refreshing under someone who is part-way through typing is worse than
   // being a few seconds stale.
   function anyDialogOpen(){
-    return ['bookingDialog','confirmDialog','eventDialog','eventConfirm','pasteDialog']
+    return ['bookingDialog','confirmDialog','eventDialog','eventConfirm','pasteDialog',
+            'staleDialog','lightbox','termsDialog','settingsDialog']
       .some(function(id){ var d = document.getElementById(id); return d && d.open; });
   }
 
@@ -2850,13 +2922,14 @@
     if (polling) return;
     polling = true;
     setInterval(function(){
+      if (!session) return;                 // it kept polling after a sign-out
       if (document.hidden) return;
       if (anyDialogOpen()) return;
-      loadBookings().catch(function(){});
+      loadBookings().then(function(){ notePoll(true); }, function(){ notePoll(false); });
     }, POLL_MS);
     document.addEventListener('visibilitychange', function(){
       if (!document.hidden && session && !anyDialogOpen()){
-        loadBookings().catch(function(){});
+        loadBookings().then(function(){ notePoll(true); }, function(){ notePoll(false); });
       }
     });
   }
@@ -2918,11 +2991,11 @@
     var stale = staleBookings();
     document.getElementById('staleList').innerHTML = stale.map(function(b){
       var title = b.organiser ? escapeHtml(b.organiser) : escapeHtml(b.area) + ' booking';
-      return '<div class="stale-row" data-id="'+b.id+'">'+
+      return '<div class="stale-row" data-id="'+escapeHtml(b.id)+'">'+
         '<div class="stale-info"><b>'+title+'</b><span>'+fmtDateLong(b.date)+' · '+escapeHtml(b.area)+'</span></div>'+
         '<div class="stale-actions write-only">'+
-          '<button type="button" class="btn" data-reschedule="'+b.id+'">Reschedule</button>'+
-          '<button type="button" class="btn danger" data-clearstale="'+b.id+'">Clear</button>'+
+          '<button type="button" class="btn" data-reschedule="'+escapeHtml(b.id)+'">Reschedule</button>'+
+          '<button type="button" class="btn danger" data-clearstale="'+escapeHtml(b.id)+'">Clear</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -2935,7 +3008,7 @@
   function clearStaleIds(ids){
     if (!ids.length) return;
     var newBookings = state.bookings.filter(function(b){ return ids.indexOf(b.id) === -1; });
-    var newState = {bookings:newBookings};
+    var newState = {bookings:newBookings, events: state.events || []};
     var previousState = state;
     state = newState;
     renderAll();
@@ -3601,7 +3674,10 @@
       var newBookings = state.bookings.slice();
       var idx = newBookings.findIndex(function(b){return b.id===id;});
       if (idx===-1) newBookings.push(booking); else newBookings[idx] = booking;
-      var newState = {bookings:newBookings};
+      // Carry the events across. Dropping them emptied the rail, the events
+      // board and — worse — the set the paste importer de-duplicates against,
+      // so a paste after any booking save added every fixture a second time.
+      var newState = {bookings:newBookings, events: state.events || []};
       var previousState = state;
 
       var saveBtn = document.getElementById('formSave');
@@ -3639,7 +3715,10 @@
     dlg.showModal();
     document.getElementById('confirmYes').onclick = function(){
       var newBookings = state.bookings.filter(function(x){return x.id!==id;});
-      var newState = {bookings:newBookings};
+      // Carry the events across. Dropping them emptied the rail, the events
+      // board and — worse — the set the paste importer de-duplicates against,
+      // so a paste after any booking save added every fixture a second time.
+      var newState = {bookings:newBookings, events: state.events || []};
       var previousState = state;
       state = newState;
       dlg.close();
@@ -3709,6 +3788,9 @@
     document.getElementById('signOut').addEventListener('click', function(){
       document.getElementById('settingsDialog').close();
       dropSession();
+      // The draft belongs to whoever was signed in, and a bar handset gets
+      // handed to the next manager with the tab still open.
+      clearDraft();
       state = { bookings: [], events: [] };
       renderAll();
       showAuth('Signed out.');
