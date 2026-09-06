@@ -1,6 +1,6 @@
 {
   "project": "Hotel Maroubra — Function Sheet",
-  "updated": "2026-09-06",
+  "updated": "2026-09-07",
   "entries": [
     {
       "id": "public-repo-no-secrets",
@@ -598,6 +598,103 @@
         "explicit-display-beats-hidden"
       ],
       "date": "2026-09-06"
+    },
+    {
+      "id": "brand-bar-sticky",
+      "type": "decision",
+      "title": "A slim sticky bar carries the brand and the tools",
+      "tags": [
+        "design",
+        "layout",
+        "header"
+      ],
+      "what": "A 58-60px sticky bar carries the elephant mark, a HOTEL MAROUBRA wordmark and a sub-line naming the board and the date. On a laptop it also holds the add button and labelled T&Cs / Settings buttons; on a phone those two are icons only.",
+      "why": "The old header was a full-width block that ate the top of a phone and did not follow the scroll. The elephant is lifted out of logo.png as its own gold-on-transparent mark because the full logo squashed into a 38px box was unreadable.",
+      "date": "2026-09-07"
+    },
+    {
+      "id": "mode-segment",
+      "type": "decision",
+      "title": "The two boards are a segment, not a toggle",
+      "tags": [
+        "design",
+        "navigation"
+      ],
+      "what": "Bookings and Upcoming events are a two-tab segment with aria-selected, not a single toggle button labelled with where it would take you.",
+      "why": "A toggle had to be read to know which board you were on and which way it would go. A segment shows both states at once.",
+      "supersedes": [
+        "events-board"
+      ],
+      "date": "2026-09-07"
+    },
+    {
+      "id": "laptop-rail",
+      "type": "decision",
+      "title": "A laptop gets a standing rail beside both boards",
+      "tags": [
+        "design",
+        "layout",
+        "laptop"
+      ],
+      "what": "At 1000px and up a 320px rail stands beside both boards with three panels: on tonight, deposits to chase, what is on in Sydney. It is sticky at top:74px, capped to calc(100dvh - 90px) with its own overflow-y:auto.",
+      "why": "A 640px column adrift in a screen and a half of empty paper. The cap is what makes it track the scroll from the first pixel — a sticky element taller than the viewport cannot stay pinned, so it appears to catch up only at the bottom.",
+      "date": "2026-09-07"
+    },
+    {
+      "id": "stat-tiles-filter",
+      "type": "decision",
+      "title": "The count tiles are filters, and hand the tab back",
+      "tags": [
+        "design",
+        "filtering"
+      ],
+      "what": "The four count tiles are buttons. Tapping Urgent or Chase deposit filters the list to those bookings and switches to the All tab so the tab does not hide what was just asked for; tapping the tile again restores the tab you were on, remembered in view.tabBeforeFocus.",
+      "why": "The counts were the first thing a manager read and the obvious thing to tap. Without the hand-back, turning a tile off stranded you on All.",
+      "date": "2026-09-07"
+    },
+    {
+      "id": "terms-two-buttons",
+      "type": "decision",
+      "title": "The T&Cs open from the bar and from the thumb bar",
+      "tags": [
+        "design",
+        "phone",
+        "accessibility"
+      ],
+      "what": "The T&Cs open from two controls: an icon in the sticky bar (labelled on a laptop, aria-label only on a phone) and a labelled button in the phone's bottom action bar. The action bar is no longer write-only, since reading the terms is not a write.",
+      "why": "Measured: labelled buttons need 186px in the bar and no phone from 320 to 430px has the room beside the wordmark. A bare clipboard emoji is a guess, so the phone gets a named button where a thumb already is.",
+      "date": "2026-09-07"
+    },
+    {
+      "id": "day-grouped-list",
+      "type": "decision",
+      "title": "Bookings are grouped under a day heading",
+      "tags": [
+        "design",
+        "list"
+      ],
+      "what": "Booking cards are grouped under a day heading carrying the date and a relative label (Today / Tomorrow / in N days).",
+      "why": "A run sheet is read by day. Repeating the date on every card cost space and still made the reader group them by eye.",
+      "relates_to": [
+        "chronological-order"
+      ],
+      "date": "2026-09-07"
+    },
+    {
+      "id": "computed-display-not-hidden",
+      "type": "gotcha",
+      "title": "Ask for computed display, not the hidden attribute",
+      "tags": [
+        "css",
+        "javascript",
+        "layout"
+      ],
+      "what": "To ask whether an element is on screen, read getComputedStyle(el).display, not el.hidden. An element a media query removed with display:none still reports hidden === false, and its getBoundingClientRect() is all zeros.",
+      "why": "revealOpenCard used .actionbar.hidden to find the floor of the viewport. On a laptop the media query takes the bar away, so the floor came back 0 and every card open scrolled the page down several hundred pixels.",
+      "relates_to": [
+        "explicit-display-beats-hidden"
+      ],
+      "date": "2026-09-07"
     }
   ]
 }

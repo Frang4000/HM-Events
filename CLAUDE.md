@@ -11,6 +11,8 @@ says so and should stay.
 
 - `index.html` — the entire app. No build step, no dependencies, no framework.
   Plain ES5-style JS in one inline `<script>`. Edit it directly.
+- `logo.png` — the full logo, used on the sign-in screen. `logo-mark.png` is
+  the elephant on its own, gold on transparent, used in the sticky bar.
 - `config.js` — Supabase URL, publishable key, staff email. Public on purpose.
 - `schema.sql` — the table and its RLS policies. Idempotent; safe to re-run.
 - `README.md` — setup, the security model, the SQL for newer columns.
@@ -72,6 +74,12 @@ the form.
 
 **Touch targets are 40px minimum.** This is used on phones, standing up.
 
+**To ask whether something is on screen, read its computed display.**
+`el.hidden` is false for anything a media query removed with `display:none`,
+and that element's `getBoundingClientRect()` is all zeros. Reading `.hidden`
+on the action bar gave a viewport floor of 0 on a laptop and scrolled the page
+down on every card open.
+
 ## Testing
 
 There is no test suite in the repo. Tests are built ad hoc against a **local
@@ -98,7 +106,26 @@ Say so plainly rather than implying live verification.
   urgency put a deposit chase two weeks out above an event tomorrow and made
   the board look shuffled.
 - **Area chips are OR**, not AND. Ticking a second area widens the list.
-- **Nothing is ever auto-deleted.** Old events prompt; a human clears them.
+- **Bookings are never auto-deleted.** Old ones prompt; a human clears them.
+  Events are the one exception: `pruneFinishedEvents()` drops an event two
+  hours after it starts, because an event is a heads-up, not a record.
+- **The brand bar is sticky and stays around 58–60px.** It carries the
+  elephant mark, the HOTEL MAROUBRA wordmark and a sub-line naming the board
+  and the date. Growing it is the first thing that ruins a phone.
+- **Bookings / Upcoming events is a segment**, not a toggle. A toggle had to
+  be read to know which board you were looking at.
+- **The four count tiles are filters.** Tapping one borrows the All tab so the
+  tab does not hide what was asked for, and turning it off hands back the tab
+  you were on (`view.tabBeforeFocus`).
+- **The laptop rail is capped to the viewport** with its own `overflow-y`. A
+  sticky element taller than the window cannot stay pinned — uncapped, it only
+  appeared to catch up at the bottom of the page.
+- **The T&Cs open from two places.** Labelled buttons need 186px in the sticky
+  bar and no phone from 320–430px has the room, so the phone gets a named
+  button in the bottom action bar and the bar icon carries an `aria-label`.
+  The action bar is therefore not `write-only` — reading terms is not a write.
+- **Bookings are grouped under day headings**, so the date is not repeated on
+  every card.
 - **"Taken by" starts empty every time.** It used to remember the last name on
   that phone, which put the wrong manager on bookings from a shared handset.
 - **The booking sheet holds a fixed height** and scrolls inside itself. Letting
