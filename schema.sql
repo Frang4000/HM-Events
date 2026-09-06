@@ -33,9 +33,37 @@ alter table public.bookings add column if not exists table_pref text;
 -- Sorting and the "next 7 days" counts read this constantly.
 create index if not exists bookings_event_date_idx on public.bookings (event_date);
 
--- Row Level Security: with this on, the publishable key in config.js can
--- do nothing on its own. Only a request carrying a signed-in staff token
--- gets through, which is what the password box on the front produces.
+-- The page reads these as lists. Without the check, a row written straight
+-- over the API could put a string here and stop the whole board rendering.
+alter table public.bookings drop constraint if exists bookings_payments_is_array;
+alter table public.bookings drop constraint if exists bookings_refunds_is_array;
+alter table public.bookings add constraint bookings_payments_is_array
+  check (payments is null or jsonb_typeof(payments) = 'array') not valid;
+alter table public.bookings add constraint bookings_refunds_is_array
+  check (refunds  is null or jsonb_typeof(refunds)  = 'array') not valid;
+
+-- ---------------------------------------------------------------
+--  WHO IS ALLOWED IN.  Read this before you change it.
+--
+--  The publishable key in config.js is public — it is in the repo, and
+--  it has to be, because the page is served from a public GitHub Pages
+--  site. On its own that key can do nothing, because Row Level Security
+--  below refuses every request that is not carrying a signed-in token.
+--
+--  The policies name the ONE staff account. "to authenticated" on its
+--  own is not enough: it means anyone holding any signed-in token, and
+--  if email sign-up is left switched on in the Supabase dashboard then
+--  a stranger with the public key can make themselves an account and
+--  read every customer name and phone number on the board.
+--
+--  So ALSO do this, once, in the dashboard:
+--    Authentication -> Sign In / Providers -> turn OFF "Allow new users
+--    to sign up", and leave anonymous sign-ins off.
+--
+--  STAFF_EMAIL below must match the staff user in Authentication ->
+--  Users, and the staffEmail in config.js. If it does not match, the
+--  board will sign in and then show nothing — that is the symptom.
+-- ---------------------------------------------------------------
 alter table public.bookings enable row level security;
 
 drop policy if exists "staff read"   on public.bookings;
@@ -43,10 +71,15 @@ drop policy if exists "staff insert" on public.bookings;
 drop policy if exists "staff update" on public.bookings;
 drop policy if exists "staff delete" on public.bookings;
 
-create policy "staff read"   on public.bookings for select to authenticated using (true);
-create policy "staff insert" on public.bookings for insert to authenticated with check (true);
-create policy "staff update" on public.bookings for update to authenticated using (true) with check (true);
-create policy "staff delete" on public.bookings for delete to authenticated using (true);
+create policy "staff read"   on public.bookings for select to authenticated
+  using ((auth.jwt() ->> 'email') = 'frang@mjh.com');
+create policy "staff insert" on public.bookings for insert to authenticated
+  with check ((auth.jwt() ->> 'email') = 'frang@mjh.com');
+create policy "staff update" on public.bookings for update to authenticated
+  using ((auth.jwt() ->> 'email') = 'frang@mjh.com')
+  with check ((auth.jwt() ->> 'email') = 'frang@mjh.com');
+create policy "staff delete" on public.bookings for delete to authenticated
+  using ((auth.jwt() ->> 'email') = 'frang@mjh.com');
 
 
 -- ---------------------------------------------------------------
@@ -89,7 +122,13 @@ drop policy if exists "staff insert events" on public.events;
 drop policy if exists "staff update events" on public.events;
 drop policy if exists "staff delete events" on public.events;
 
-create policy "staff read events"   on public.events for select to authenticated using (true);
-create policy "staff insert events" on public.events for insert to authenticated with check (true);
-create policy "staff update events" on public.events for update to authenticated using (true) with check (true);
-create policy "staff delete events" on public.events for delete to authenticated using (true);
+-- Same rule as bookings: the one staff account, not merely "signed in".
+create policy "staff read events"   on public.events for select to authenticated
+  using ((auth.jwt() ->> 'email') = 'frang@mjh.com');
+create policy "staff insert events" on public.events for insert to authenticated
+  with check ((auth.jwt() ->> 'email') = 'frang@mjh.com');
+create policy "staff update events" on public.events for update to authenticated
+  using ((auth.jwt() ->> 'email') = 'frang@mjh.com')
+  with check ((auth.jwt() ->> 'email') = 'frang@mjh.com');
+create policy "staff delete events" on public.events for delete to authenticated
+  using ((auth.jwt() ->> 'email') = 'frang@mjh.com');

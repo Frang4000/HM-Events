@@ -133,8 +133,29 @@ password is a doorknob with no door behind it.
 The key that must **never** go in this repo is the `service_role` / secret one.
 That one does bypass RLS.
 
-**What actually protects the data is the one shared password.** It is the whole
-lock. So:
+### One thing to switch off in Supabase, once
+
+Go to **Authentication → Sign In / Providers** and turn **off** "Allow new
+users to sign up" (and leave anonymous sign-ins off).
+
+Here is why it matters. The rules on the table used to say "let anyone who is
+signed in through". That sounds right, but "signed in" does not mean "signed in
+as us" — with sign-ups left on, anybody who found the page could make
+themselves an account with the public key and then read every customer name and
+phone number on the board, and delete bookings, without ever knowing the staff
+password.
+
+`schema.sql` now names the staff account in the rules instead, so re-running it
+closes that on its own. Switching sign-ups off is the belt to that braces, and
+it takes ten seconds. Do both.
+
+If you re-run `schema.sql`, the email in it must match the staff user in
+**Authentication → Users** and `staffEmail` in `config.js`. If they don't
+match, the board signs in and then shows an empty sheet — that is the symptom.
+Sign in once straight afterwards to check.
+
+**What actually protects the data day to day is the one shared password.** It
+is the lock everyone uses. So:
 
 - Change it whenever someone leaves — Supabase → Authentication → Users → the
   staff user → reset password. Everyone re-enters it once.
@@ -154,7 +175,13 @@ lock. So:
   outside the app can't plant something that runs on everyone else's phone.
   A PDF is verified by its actual first bytes, not by its name.
 - Everything typed into a booking is escaped when it is drawn, so a name or
-  note containing HTML shows as text.
+  note containing HTML shows as text. That includes the times, the row ids and
+  the crowd labels, which a row edited outside the app could otherwise use to
+  slip markup past the escaping.
+- A booking with a malformed record in it is drawn as a gap, not as a blank
+  board. One bad row used to stop the whole list rendering.
+- Signing out tells Supabase to throw the session away as well as forgetting it
+  on the phone, and clears any half-typed booking left behind.
 
 **What it deliberately doesn't do**, and why:
 
