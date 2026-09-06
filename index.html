@@ -704,58 +704,280 @@
   }
   .signout:active{ opacity:.65; }
 
-  /* ---------- laptop ----------
-     The whole page was phone-shaped at every width: a 640px column stranded in
-     the middle of a 1512px screen, 526px of header and controls before the
-     first booking, and a thumb-width gold bar across the bottom. None of that
-     is wrong on a phone; all of it looks borrowed on a laptop. */
-  @media (min-width: 1024px){
-    /* The header was 280px tall and only half of that was the logo. */
-    .topbar{ padding:16px 20px 14px; border-radius:0 0 24px 24px; }
-    .brand-logo{ width:104px; }
-    .tool-label{ margin-top:8px; font-size:11px; }
-    .subhead{ margin-top:3px; font-size:12px; }
-    .tc-btn{ margin-top:10px; min-height:36px; padding:7px 15px; font-size:12px; }
-    #modeSwitch{ top:14px; left:16px; }
-    .areaswitch{ min-height:36px; padding:7px 15px; font-size:12px; }
-    .settingsbtn{ top:14px; right:16px; padding:7px 0; width:38px; }
+  /* =================================================================
+     DASHBOARD REDESIGN
+     Slim sticky bar, day-grouped list, an "on tonight" strip and a
+     standing rail on desktop. These override the phone-era rules above;
+     on shipping they get folded into the originals rather than left as
+     a second layer.
+     ================================================================= */
 
-    /* Two across instead of one long column down the middle of an empty
-       screen. align-items:start keeps a card its own height, so expanding one
-       lengthens only that card rather than stretching its neighbour. */
-    #app{ max-width:1140px; }
-    #list, #eventList{
-      display:grid; grid-template-columns:repeat(2, minmax(0,1fr));
-      align-items:start; gap:12px 16px; padding:6px 18px 10px;
+  /* --- 1. slim sticky brand bar --- */
+  .topbar{
+    position:sticky; top:0; z-index:40; text-align:left;
+    display:flex; align-items:center; padding:9px 14px; border-radius:0;
+    box-shadow:0 1px 0 rgba(0,0,0,.25);
+  }
+  .topbar .inner{ display:flex; align-items:center; gap:11px; width:100%; }
+  /* The elephant stands on its own on the green — it is gold line art on a
+     transparent ground, so it needs no plaque behind it. The wordmark is set
+     as type beside it rather than baked into a squashed image. */
+  .topbar .mark{ flex:none; height:34px; display:block; }
+  .topbar .mark img{ height:100%; width:auto; display:block; }
+  .topbar .who{ min-width:0; flex:1; display:flex; flex-direction:column; justify-content:center; gap:1px; }
+  .topbar .who .wordmark{
+    display:block; font-family:'Oswald',system-ui,sans-serif; font-weight:600;
+    text-transform:uppercase; letter-spacing:.14em; font-size:15px; line-height:1.1;
+    color:var(--on-brand); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .topbar .who .subline{
+    display:block; font-size:11.5px; color:rgba(244,241,226,.72); margin:0;
+    letter-spacing:.01em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  /* 14 letter-spaced capitals do not fit beside three buttons on a 360px
+     phone, so the tracking relaxes until there is room for it. */
+  @media (max-width: 479px){
+    .topbar .who .wordmark{ font-size:14px; letter-spacing:.05em; }
+  }
+  .topbar .who .subline .sep{ display:none; }
+  .topbar .who .subline #dateline{ display:none; }
+  /* The date only earns its place once the bar is wide enough for it.
+     Note the defaults sit ABOVE this query: a media block adds no
+     specificity, so a later plain rule would beat it. */
+  @media (min-width: 620px){
+    .topbar .who .subline .sep{
+      display:inline-block; width:3px; height:3px; border-radius:50%;
+      background:currentColor; opacity:.6; margin:0 7px; vertical-align:middle;
     }
-    #list .empty, #eventList .empty{ grid-column:1 / -1; }
-    .stats{ padding:0 18px 14px; }
-    .controls{ padding:0 18px 12px; }
+    .topbar .who .subline #dateline{ display:inline; }
+  }
+  .iconbtn{
+    min-height:40px; min-width:40px; padding:0 11px; flex:none;
+    display:inline-flex; align-items:center; gap:6px; justify-content:center;
+    border:1px solid rgba(244,241,226,.28); border-radius:11px;
+    background:rgba(244,241,226,.08); color:var(--on-brand);
+    font-size:14px; font-weight:600; cursor:pointer;
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      transform var(--dur-fast) var(--ease);
+  }
+  .iconbtn .lbl{ display:none; font-size:12.5px; }
+  /* The phone keeps its thumb-reach bar at the bottom; this is the laptop's. */
+  .addbtn{ display:none; }
+  @media (hover:hover) and (pointer:fine){
+    .iconbtn:hover{ background:rgba(244,241,226,.17); border-color:var(--gold); }
+  }
+  .iconbtn:active{ transform:scale(.96); background:rgba(244,241,226,.22); }
 
-    /* A button a mouse clicks once, not a bar a thumb reaches for blind. */
-    .actionbar{ justify-content:center; padding:16px 18px 18px; }
-    .fab{ flex:none; width:auto; min-width:230px; padding:13px 28px;
-          font-size:14.5px; min-height:48px; }
+  /* --- 2. bookings / events segment --- */
+  .segment{
+    display:flex; gap:4px; margin:12px 14px 0; padding:4px;
+    background:var(--surface-2); border:1px solid var(--line); border-radius:13px;
+  }
+  .segment button{
+    flex:1; min-height:40px; border:0; border-radius:10px; background:transparent;
+    color:var(--ink-soft); font-size:13.5px; font-weight:600; cursor:pointer;
+    transition:background var(--dur) var(--ease), color var(--dur) var(--ease),
+      transform var(--dur-fast) var(--ease);
+  }
+  .segment button[aria-selected="true"]{
+    background:var(--surface); color:var(--ink); box-shadow:var(--shadow);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .segment button:hover:not([aria-selected="true"]){ color:var(--ink); }
+  }
+  .segment button:active{ transform:scale(.985); }
 
-    /* Body text past about 70 characters a line gets tiring at a desk. */
+  /* --- 3. on tonight --- */
+  .tonight{
+    margin:12px 14px 0; padding:13px 14px; border-radius:14px;
+    background:var(--surface); border:1px solid var(--line);
+    border-left:5px solid var(--gold); box-shadow:var(--shadow);
+  }
+  .tonight[hidden]{ display:none; }
+  .tonight h2{
+    margin:0 0 8px; font-family:'Oswald',system-ui,sans-serif; font-size:11px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
+  }
+  .tonight ul{ margin:0; padding:0; list-style:none; display:grid; gap:9px; }
+  .tonight li{ display:flex; gap:11px; align-items:baseline; font-size:14px; }
+  .tonight time{ font-family:'IBM Plex Mono',monospace; font-weight:600; min-width:56px; flex:none; }
+  .tonight .sub{ color:var(--ink-soft); font-size:12.5px; }
+  .tonight .none, .panel .none{ color:var(--ink-faint); font-size:13.5px; margin:0; }
+
+  /* --- 4. stat tiles --- */
+  .stats{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px 14px 0; }
+  .stat{
+    min-height:64px; padding:10px 12px; border-radius:14px; text-align:left;
+    display:flex; flex-direction:column; justify-content:center; gap:2px;
+  }
+  .stat{ cursor:pointer; font:inherit; color:inherit; width:100%;
+    transition:border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease); }
+  .stat.picked{ outline:2px solid var(--accent); outline-offset:-2px; }
+  .stat.picked.alert{ outline-color:var(--warn); }
+  .stat.picked.urgent{ outline-color:var(--danger); }
+  @media (hover:hover) and (pointer:fine){
+    .stat:hover{ border-color:var(--line-strong); }
+  }
+  .stat:active{ transform:scale(.985); }
+  .stat b.num{ font-size:24px; }
+  .stat span{ font-size:12px; }
+
+  /* --- 5. controls --- */
+  .controls{ padding:14px 14px 0; display:grid; gap:10px; }
+  .tab{
+    min-height:40px; padding:0 14px; border-radius:999px; border:1px solid var(--line-strong);
+    display:inline-flex; align-items:center; gap:7px;
+  }
+  .tab .n{
+    font-size:11.5px; padding:2px 7px; border-radius:999px; margin-left:0;
+    background:var(--surface-2); color:var(--ink-faint); opacity:1;
+  }
+  .tab.active{ background:var(--brand-green); border-color:var(--brand-green); color:var(--on-brand); }
+  .tab.active .n{ background:rgba(244,241,226,.2); color:var(--on-brand); }
+  .searchrow input{ min-height:44px; border-radius:12px; border-color:var(--line-strong); }
+  .chip{ min-height:40px; padding:0 13px; border:1px dashed var(--line-strong); background:transparent; }
+  .chip.on{ border-style:solid; border-color:var(--accent); background:var(--accent-soft); color:var(--accent-ink); }
+
+  /* --- 6. day headings --- */
+  .dayhead{
+    position:sticky; top:56px; z-index:20;
+    margin:16px 0 8px; padding:6px 0;
+    display:flex; align-items:baseline; gap:9px;
+    background:linear-gradient(180deg,var(--paper) 68%,transparent);
+    font-family:'Oswald',system-ui,sans-serif; font-size:12px;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft);
+  }
+  .dayhead .rel{
+    font-family:'Work Sans',system-ui,sans-serif; font-size:11px; font-weight:500;
+    letter-spacing:.04em; padding:3px 8px; border-radius:999px; text-transform:none;
+    background:var(--surface-2); color:var(--ink-faint);
+  }
+  .dayhead.is-today{ color:var(--danger); }
+  .dayhead.is-today .rel{ background:var(--danger-soft); color:var(--danger); }
+  .daygroup{ display:grid; gap:10px; }
+
+  /* --- 7. cards --- */
+  #list, #eventList{ display:block; padding:0 14px 8px; }
+  .card{ border-left:0; position:relative; border-radius:14px; }
+  .card::before{
+    content:""; position:absolute; inset:0 auto 0 0; width:5px;
+    background:var(--band-color, var(--line)); z-index:1;
+  }
+  .card-head{ padding-left:17px; }
+  /* The badge is a time now, not a date — the day heading above says which day. */
+  .datebadge.when{
+    background:none; border:0; padding:0; width:58px; min-width:58px; flex:none;
+    display:flex; flex-direction:column; align-items:center; gap:1px; align-self:flex-start;
+  }
+  .datebadge.when .t{
+    font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600;
+    color:var(--ink); line-height:1.1; letter-spacing:-.02em;
+  }
+  .datebadge.when .w{
+    font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint);
+  }
+
+  /* --- 8. desktop rail --- */
+  .rail{ display:none; }
+  .panel{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); padding:14px;
+  }
+  .panel h2{
+    margin:0 0 10px; font-family:'Oswald',system-ui,sans-serif; font-size:11px;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint);
+  }
+  .panel ul{ margin:0; padding:0; list-style:none; display:grid; gap:10px; }
+  .panel li{ display:flex; gap:10px; align-items:flex-start; font-size:13.5px; }
+  /* An organiser name with no spaces in it would otherwise widen the panel
+     past the rail, which clips its right-hand edge off. */
+  .panel li > div, .panel li > span{ min-width:0; overflow-wrap:anywhere; }
+  .panel .dot{ width:8px; height:8px; border-radius:50%; margin-top:6px; flex:none; }
+  .panel .amt{ margin-left:auto; font-family:'IBM Plex Mono',monospace; font-weight:600; }
+  .panel .sub{ color:var(--ink-soft); font-size:12.5px; }
+
+  /* --- 9. action bar --- */
+  .actionbar{
+    background:var(--paper); border-top:1px solid var(--line);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom)); gap:10px;
+  }
+  @supports (backdrop-filter: blur(10px)){
+    .actionbar{ background:color-mix(in srgb, var(--paper) 86%, transparent); backdrop-filter:blur(10px); }
+  }
+  .fab{ border-radius:14px; min-height:50px; font-size:15px; box-shadow:none; }
+  .barbtn{
+    flex:none; pointer-events:auto; min-height:50px; padding:0 15px;
+    border:1px solid var(--line); border-radius:14px; background:var(--surface);
+    color:var(--ink); font-size:14.5px; font-weight:600; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      transform var(--dur-fast) var(--ease);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .barbtn:hover{ border-color:var(--brand-green); background:var(--surface-2); }
+  }
+  .barbtn:active{ transform:scale(.97); }
+  .fab{ margin:0; }
+
+  /* ---------- laptop ----------
+     The list gets the room and a rail carries the three things a duty
+     manager keeps glancing at, instead of a 640px column adrift in a
+     screen and a half of empty paper. */
+  @media (min-width: 1000px){
+    #app{ max-width:1320px; padding-bottom:34px; }
+    .topbar{ padding:10px 24px; }
+    .topbar .mark{ height:38px; }
+    .topbar .who .wordmark{ font-size:16.5px; letter-spacing:.16em; }
+    .iconbtn .lbl{ display:inline; }
+    .segment{ margin:16px 24px 0; max-width:360px; }
+    .tonight{ display:none; }          /* it lives in the rail up here */
+    .stats{ grid-template-columns:repeat(4,minmax(0,1fr)); padding:14px 24px 0; gap:12px; }
+    .stat{ min-height:80px; }
+    .stat b.num{ font-size:29px; }
+
+    .pagegrid{
+      display:grid; grid-template-columns:minmax(0,1fr) 320px;
+      gap:24px; align-items:start; padding:0 24px; margin-top:2px;
+    }
+    .maincol{ min-width:0; }
+    .controls{ padding:16px 0 0; }
+    #list{ padding:0; }
+    .daygroup{ grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:12px 14px; }
+    .dayhead{ top:58px; margin:20px 0 10px; }
+
+    /* Capped to the screen and scrolled internally. Left uncapped, a rail
+       taller than the viewport slides away with the page and only catches
+       up at the bottom — which is exactly what it looked like was broken. */
+    .rail{
+      display:grid; gap:14px; align-content:start;
+      position:sticky; top:74px;
+      max-height:calc(100vh - 90px); max-height:calc(100dvh - 90px);
+      overflow-y:auto; overscroll-behavior:contain;
+      scrollbar-width:thin;
+    }
+    .rail::-webkit-scrollbar{ width:8px; }
+    .rail::-webkit-scrollbar-thumb{ background:var(--line-strong); border-radius:99px; }
+
+    /* The floating bar goes; the primary action lives in the sticky bar so it
+       is in reach wherever you have scrolled to, rather than parked at the
+       bottom of the document. */
+    .actionbar{ display:none; }
+    .addbtn{
+      display:inline-flex; background:var(--gold); border-color:var(--gold);
+      color:var(--brand-green-deep); font-weight:700;
+    }
+    .addbtn .lbl{ font-size:13px; }
+    @media (hover:hover) and (pointer:fine){
+      .addbtn:hover{ background:var(--gold); border-color:var(--gold); filter:brightness(1.07); }
+    }
+    .addbtn:active{ background:var(--gold); filter:brightness(.94); }
     .terms-intro, .terms-sec li, .paste-sum{ max-width:66ch; }
   }
 
-  /* A 13-inch work laptop is wide but short. Same layout, less of it spent
-     on the brand before the first booking appears. */
-  @media (min-width: 1024px) and (max-height: 820px){
-    .topbar{ padding:12px 20px 10px; }
-    .brand-logo{ width:78px; }
-    .tool-label{ margin-top:6px; letter-spacing:.1em; }
-    .subhead{ margin-top:2px; }
-    .tc-btn{ margin-top:8px; min-height:32px; padding:6px 13px; }
-    .areaswitch{ min-height:32px; padding:6px 13px; }
-    #modeSwitch{ top:10px; }
-    .settingsbtn{ top:10px; padding:6px 0; width:36px; }
-    .stats{ padding:0 18px 10px; }
-    .stat{ padding:7px 4px; }
-    .controls{ padding:0 18px 8px; }
-    .legend{ font-size:11px; }
+  /* Wide but short: a 13-inch work laptop. */
+  @media (min-width: 1000px) and (max-height: 820px){
+    .stat{ min-height:70px; }
+    .stat b.num{ font-size:25px; }
   }
 
   ::selection{ background:var(--accent-soft); color:var(--accent-ink); }
@@ -782,16 +1004,28 @@
 
 <div id="page-root">
 <div id="app">
-  <div class="topbar">
-    <button class="areaswitch" id="modeSwitch" type="button">
-      <span id="modeSwitchLabel">📅 Upcoming events</span>
-    </button>
-    <button class="areaswitch settingsbtn" id="settingsOpen" type="button" aria-label="Settings">⚙</button>
-    <h1><img class="brand-logo" src="logo.png" alt="Hotel Maroubra"></h1>
-    <p class="tool-label">Event Bookings</p>
-    <p class="subhead" id="dateline"></p>
-    <button class="tc-btn" id="termsOpen" type="button">📋 Event T&amp;Cs</button>
+  <header class="topbar">
+    <div class="inner">
+      <div class="mark"><img src="logo-mark.png" alt="" width="531" height="354"></div>
+      <div class="who">
+        <b class="wordmark">Hotel Maroubra</b>
+        <span class="subline"><span id="toolLabel">Function Sheet</span><i class="sep" aria-hidden="true"></i><span id="dateline"></span></span>
+      </div>
+      <button class="iconbtn addbtn write-only" id="topAdd" type="button">+<span class="lbl" id="topAddLabel">New booking</span></button>
+      <button class="iconbtn" id="termsOpen" type="button" title="Event T&amp;Cs" aria-label="Event T&amp;Cs">📋<span class="lbl">T&amp;Cs</span></button>
+      <button class="iconbtn" id="settingsOpen" type="button" aria-label="Settings">⚙<span class="lbl">Settings</span></button>
+    </div>
+  </header>
+
+  <div class="segment" id="modeSegment" role="tablist">
+    <button type="button" role="tab" id="modeBookings" aria-selected="true">Bookings</button>
+    <button type="button" role="tab" id="modeEvents" aria-selected="false">Upcoming events</button>
   </div>
+
+  <section class="tonight" id="tonightStrip" hidden>
+    <h2>On tonight</h2>
+    <div id="tonightBody"></div>
+  </section>
 
   <div class="banner readonly" id="roBanner" hidden>
     <span id="roBannerText">View only on this link — you can check the sheet, but not add to it. Send new bookings to a manager to put in.</span>
@@ -805,6 +1039,9 @@
     <span><span id="staleBannerCount">0</span> event(s) are 2+ days old and still sitting here.</span>
     <button id="staleReview">Review</button>
   </div>
+
+  <div class="pagegrid">
+  <main class="maincol">
 
   <div class="stats" id="stats"></div>
 
@@ -838,11 +1075,16 @@
   <div id="list"></div>
   </div>
 
+  </main>
+  <aside class="rail" id="rail"></aside>
+  </div>
+
   <p class="footer-note" id="storageNote"></p>
   <p class="credit">Hotel Maroubra — built in-house by Alex Frangos</p>
 </div>
 
-<div class="actionbar write-only" id="actionBar">
+<div class="actionbar" id="actionBar">
+  <button class="barbtn" id="termsOpenBar" type="button">📋 T&amp;Cs</button>
   <button class="fab write-only" id="fabNew">+ New booking</button>
   <button class="fab write-only" id="fabNewEvent" hidden>+ New event</button>
 </div>
@@ -1389,7 +1631,9 @@
 
   // ---------------- state ----------------
   var state = { bookings: [], events: [] };
-  var view = { tab: 'attention', areas: [], search: '' };
+  // A stat tile doubles as a filter: tap "Chase deposit" to see only the
+  // ones being chased, tap it again to come back.
+  var view = { tab: 'attention', areas: [], search: '', focus: null, tabBeforeFocus: null };
   // 'bookings' or 'events'. Two boards behind one door — a booking is
   // something we sold, an event is something happening in Sydney that will
   // fill the place whether we like it or not.
@@ -1450,6 +1694,17 @@
     } else {
       list.sort(function(a,b){ return whenKey(a).localeCompare(whenKey(b)); });
     }
+    if (view.focus){
+      list = list.filter(function(b){
+        if (b.status === 'Cancelled') return false;
+        var d = daysUntil(b.date);
+        if (view.focus === 'chase')
+          return computeFlags(b).some(function(f){ return f.cls === 'flag-deposit'; });
+        if (view.focus === 'urgent') return priorityOf(b) === 'Urgent' && d >= 0;
+        if (view.focus === 'next7')  return d >= 0 && d <= 7;
+        return true;                                  // 'live'
+      });
+    }
     if (view.areas.length){
       list = list.filter(function(b){ return view.areas.indexOf(b.area) !== -1; });
     }
@@ -1471,11 +1726,17 @@
     var chase = live.filter(function(b){ return computeFlags(b).some(function(f){return f.cls==='flag-deposit';}); }).length;
     var urgent = live.filter(function(b){ return priorityOf(b)==='Urgent' && daysUntil(b.date)>=0; }).length;
     var el = document.getElementById('stats');
+    function tile(key, n, label, extra){
+      var on = view.focus === key;
+      return '<button type="button" class="stat'+(extra?' '+extra:'')+(on?' picked':'')+
+        '" data-stat="'+key+'" aria-pressed="'+(on?'true':'false')+'">'+
+        '<b class="num">'+n+'</b><span>'+label+'</span></button>';
+    }
     el.innerHTML =
-      '<div class="stat"><b class="num">'+live.length+'</b><span>Live bookings</span></div>'+
-      '<div class="stat"><b class="num">'+upcoming7+'</b><span>Next 7 days</span></div>'+
-      '<div class="stat'+(chase?' alert':'')+'"><b class="num">'+chase+'</b><span>Chase deposit</span></div>'+
-      '<div class="stat'+(urgent?' urgent':'')+'"><b class="num">'+urgent+'</b><span>Urgent</span></div>';
+      tile('live', live.length, 'Live bookings', '')+
+      tile('next7', upcoming7, 'Next 7 days', '')+
+      tile('chase', chase, 'Chase deposit', chase?'alert':'')+
+      tile('urgent', urgent, 'Urgent', urgent?'urgent':'');
   }
 
   function renderTabs(){
@@ -1549,7 +1810,41 @@
       host.innerHTML = '<div class="empty"><b>'+msg+'</b>'+sub+'</div>';
       return;
     }
-    host.innerHTML = list.map(cardHtml).join('');
+    host.innerHTML = groupByDay(list, cardHtml);
+  }
+
+  // A sticky heading per day beats reading the date off every card. The list
+  // is already chronological, so this only inserts the breaks.
+  function relativeDay(dateStr){
+    var d = daysUntil(dateStr);
+    if (d === 0) return 'Today';
+    if (d === 1) return 'Tomorrow';
+    if (d === -1) return 'Yesterday';
+    if (d > 1 && d <= 13) return 'in ' + d + ' days';
+    if (d < -1 && d >= -13) return Math.abs(d) + ' days ago';
+    return '';
+  }
+  function dayHeading(dateStr){
+    var d = parseYMD(dateStr);
+    if (isNaN(d)) return escapeHtml(dateStr);
+    return d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+  }
+  function groupByDay(list, render){
+    var out = [], current = null, open = false;
+    list.forEach(function(item){
+      if (item.date !== current){
+        if (open) out.push('</div>');
+        current = item.date; open = true;
+        var rel = relativeDay(current);
+        out.push('<h3 class="dayhead'+(daysUntil(current)===0 ? ' is-today' : '')+'">'+
+          escapeHtml(dayHeading(current))+
+          (rel ? '<span class="rel">'+escapeHtml(rel)+'</span>' : '')+'</h3>');
+        out.push('<div class="daygroup">');
+      }
+      out.push(render(item));
+    });
+    if (open) out.push('</div>');
+    return out.join('');
   }
 
   function extrasPillsHtml(b){
@@ -1606,12 +1901,13 @@
     return (
       '<article class="card'+(open?' open':'')+'" style="--band-color:'+band.bg+'" data-id="'+b.id+'">'+
         '<div class="card-head" data-toggle="'+b.id+'">'+
-          '<div class="datebadge"><span class="d num">'+badge.day+'</span><span class="m">'+badge.month+'</span><span class="w">'+badge.weekday+'</span></div>'+
+          '<div class="datebadge when">'+(timeText
+              ? '<b class="t num">'+escapeHtml(timeText)+'</b>'
+              : '<b class="t num">—</b>')+'<span class="w">'+badge.weekday+'</span></div>'+
           '<div class="card-body">'+
             '<div class="card-toprow"><span class="area-tag">'+escapeHtml(area)+'</span>'+
               (priority !== 'Medium' ? '<span class="pill priority-'+priority.toLowerCase()+'">'+priority+'</span>' : '')+'</div>'+
             '<h3 class="card-title">'+title+'</h3>'+
-            (timeText ? '<p class="card-when">'+timeText+'</p>' : '')+
             '<div class="card-meta">'+
               '<span class="pill size-chip" style="background:'+band.bg+';color:'+band.fg+'">'+escapeHtml(b.pax)+' pax · '+band.label+'</span>'+
               '<span class="pill '+statusClass+'">'+escapeHtml(safeStr(b.status,'Enquiry'))+'</span>'+
@@ -2059,16 +2355,16 @@
     return (
       '<article class="card'+(open?' open':'')+'" style="--band-color:var(--gold)" data-eid="'+escapeHtml(e.id)+'">'+
         '<div class="card-head" data-etoggle="'+escapeHtml(e.id)+'">'+
-          '<div class="datebadge"><span class="d num">'+badge.day+'</span><span class="m">'+badge.month+'</span><span class="w">'+badge.weekday+'</span></div>'+
+          '<div class="datebadge when">'+(time
+              ? '<b class="t num">'+escapeHtml(time)+'</b>'
+              : '<b class="t num">—</b>')+'<span class="w">'+badge.weekday+'</span></div>'+
           '<div class="card-body">'+
             '<div class="card-toprow">'+
               '<span class="ev-kind'+(isSport?' sport':'')+'">'+escapeHtml(kindLabel)+'</span>'+
               '<span class="pill '+crowd+'">'+escapeHtml(safeStr(e.expected,'Steady'))+'</span>'+
             '</div>'+
             '<h3 class="card-title">'+escapeHtml(e.title)+'</h3>'+
-            (time || e.channel
-               ? '<p class="card-when">'+[time, e.channel ? escapeHtml(e.channel) : ''].filter(Boolean).join(' · ')+'</p>'
-               : '')+
+            (e.channel ? '<p class="card-when">'+escapeHtml(e.channel)+'</p>' : '')+
             '<div class="flags">'+flag+
               (e.showing
                 ? '<span class="ev-screens">📺 '+escapeHtml(safeStr(e.screens,'All screens'))+'</span>'
@@ -2095,7 +2391,7 @@
         (has ? 'Try a different tab or search.' : 'Tap “+ New event” to put one in.')+'</div>';
       return;
     }
-    host.innerHTML = list.map(eventCardHtml).join('');
+    host.innerHTML = groupByDay(list, eventCardHtml);
   }
 
   function setMode(next){
@@ -2106,10 +2402,10 @@
     document.getElementById('stats').hidden = isEvents;
     document.getElementById('fabNew').hidden = isEvents;
     document.getElementById('fabNewEvent').hidden = !isEvents;
-    document.getElementById('modeSwitchLabel').textContent =
-      isEvents ? '← Bookings' : '📅 Upcoming events';
-    document.querySelector('.tool-label').textContent =
-      isEvents ? "What's On" : 'Event Bookings';
+    document.getElementById('modeBookings').setAttribute('aria-selected', isEvents ? 'false' : 'true');
+    document.getElementById('modeEvents').setAttribute('aria-selected', isEvents ? 'true' : 'false');
+    document.getElementById('toolLabel').textContent = isEvents ? "What's On" : 'Function Sheet';
+    document.getElementById('topAddLabel').textContent = isEvents ? 'New event' : 'New booking';
     // The old-events prompt is about bookings; it has no business shouting
     // over the events board.
     document.getElementById('staleBanner').hidden = isEvents || !staleBookings().length;
@@ -2122,14 +2418,91 @@
   function revealOpenCard(selector){
     var el = document.querySelector(selector);
     if (!el) return;
+    // The bar is taken away by a media query on the laptop, not by the
+    // hidden attribute, so ask for the computed display — reading .hidden
+    // gave a floor of 0 up here and yanked the page down on every open.
     var bar = document.querySelector('.actionbar');
-    var floor = bar && !bar.hidden ? bar.getBoundingClientRect().top : window.innerHeight;
+    var barShown = bar && getComputedStyle(bar).display !== 'none';
+    var floor = barShown ? bar.getBoundingClientRect().top : window.innerHeight;
     var r = el.getBoundingClientRect();
     if (r.bottom <= floor && r.top >= 0) return;          // already all visible
     var wanted = Math.min(r.top - 12, r.bottom - floor + 16);
     if (wanted <= 0) return;                              // would scroll upward
     try { window.scrollBy({ top: wanted, behavior: 'smooth' }); }
     catch (e) { window.scrollBy(0, wanted); }
+  }
+
+  // What a duty manager actually opens this to find out.
+  function onTonight(){
+    return state.bookings.filter(function(b){
+      return daysUntil(b.date) === 0 && b.status !== 'Cancelled';
+    }).sort(function(a,b){ return whenKey(a).localeCompare(whenKey(b)); });
+  }
+  function tonightLine(b){
+    var bits = [escapeHtml(safeStr(b.area,'Unassigned')), escapeHtml(b.pax)+' pax'];
+    var extras = [];
+    if (b.hasDJ) extras.push('DJ');
+    if (b.hasStage) extras.push('Stage');
+    if (b.status) extras.push(escapeHtml(b.status));
+    if (b.takenBy) extras.push('Taken by '+escapeHtml(b.takenBy));
+    return '<li><time>'+(fmtTime(b.time) || '—')+'</time><div><b>'+
+      (b.organiser ? escapeHtml(b.organiser) : escapeHtml(safeStr(b.area,'Booking')))+'</b> · '+
+      bits.join(' · ')+
+      (extras.length ? '<div class="sub">'+extras.join(' · ')+'</div>' : '')+
+      '</div></li>';
+  }
+  function renderTonight(){
+    var strip = document.getElementById('tonightStrip');
+    var body = document.getElementById('tonightBody');
+    if (!strip || !body) return;
+    if (mode !== 'bookings' || !loadedOnce){ strip.hidden = true; return; }
+    var list = onTonight();
+    strip.hidden = false;
+    body.innerHTML = list.length
+      ? '<ul>'+list.map(tonightLine).join('')+'</ul>'
+      : '<p class="none">Nothing booked in tonight.</p>';
+  }
+
+  function renderRail(){
+    var rail = document.getElementById('rail');
+    if (!rail) return;
+    var tonight = onTonight();
+    var chase = state.bookings.filter(function(b){
+      return computeFlags(b).some(function(f){ return f.cls === 'flag-deposit'; });
+    }).sort(function(a,b){ return whenKey(a).localeCompare(whenKey(b)); }).slice(0, 6);
+    var soon = (state.events || []).filter(function(e){
+      var d = daysUntil(e.date); return d >= 0 && d <= 10;
+    }).sort(function(a,b){ return (a.date+(a.time||'')).localeCompare(b.date+(b.time||'')); }).slice(0, 5);
+
+    function panel(title, inner){
+      return '<section class="panel"><h2>'+title+'</h2>'+inner+'</section>';
+    }
+    var tonightHtml = tonight.length
+      ? '<ul>'+tonight.map(function(b){
+          return '<li><span class="dot" style="background:'+sizeBand(b.pax).bg+'"></span><div><b>'+
+            (fmtTime(b.time) || '—')+' '+(b.organiser ? escapeHtml(b.organiser) : escapeHtml(safeStr(b.area,'Booking')))+
+            '</b><div class="sub">'+escapeHtml(safeStr(b.area,''))+' · '+escapeHtml(b.pax)+' pax</div></div></li>';
+        }).join('')+'</ul>'
+      : '<p class="none">Nothing booked in tonight.</p>';
+    var chaseHtml = chase.length
+      ? '<ul>'+chase.map(function(b){
+          return '<li><span class="dot" style="background:var(--warn)"></span><div>'+
+            (b.organiser ? escapeHtml(b.organiser) : escapeHtml(safeStr(b.area,'Booking')))+
+            '<div class="sub">'+escapeHtml(relativeDay(b.date) || fmtDateLong(b.date))+'</div></div>'+
+            (b.depositAmount ? '<span class="amt">'+escapeHtml(b.depositAmount)+'</span>' : '')+'</li>';
+        }).join('')+'</ul>'
+      : '<p class="none">Nothing to chase.</p>';
+    var onHtml = soon.length
+      ? '<ul>'+soon.map(function(e){
+          return '<li><span class="dot" style="background:var(--gold)"></span><div>'+escapeHtml(e.title)+
+            '<div class="sub">'+[relativeDay(e.date) || dayHeading(e.date), fmtTime(e.time),
+              e.channel ? escapeHtml(e.channel) : ''].filter(Boolean).join(' · ')+'</div></div></li>';
+        }).join('')+'</ul>'
+      : '<p class="none">Nothing added yet.</p>';
+
+    rail.innerHTML = panel('On tonight', tonightHtml) +
+                     panel('Deposits to chase', chaseHtml) +
+                     panel("What's on in Sydney", onHtml);
   }
 
   function renderAll(){
@@ -2140,6 +2513,8 @@
     renderAreaChips();
     renderLegend();
     renderList();
+    renderTonight();
+    renderRail();
     renderEventStats();
     renderEventTabs();
     renderSportChips();
@@ -2924,6 +3299,8 @@
     document.getElementById('tabs').addEventListener('click', function(e){
       var btn = e.target.closest('.tab'); if (!btn) return;
       view.tab = btn.getAttribute('data-tab');
+      view.focus = null;
+      view.tabBeforeFocus = null;
       renderAll();
     });
     document.getElementById('areaChips').addEventListener('click', function(e){
@@ -2967,8 +3344,11 @@
       }
     });
 
-    document.getElementById('termsOpen').addEventListener('click', function(){
-      document.getElementById('termsDialog').showModal();
+    ['termsOpen','termsOpenBar'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', function(){
+        document.getElementById('termsDialog').showModal();
+      });
     });
     document.getElementById('termsClose').addEventListener('click', function(){
       document.getElementById('termsDialog').close();
@@ -2993,8 +3373,31 @@
       if (btn) applyTheme(btn.getAttribute('data-theme-set'));
     });
 
-    document.getElementById('modeSwitch').addEventListener('click', function(){
-      setMode(mode === 'events' ? 'bookings' : 'events');
+    document.getElementById('stats').addEventListener('click', function(e){
+      var t = e.target.closest('[data-stat]');
+      if (!t) return;
+      var key = t.getAttribute('data-stat');
+      if (view.focus === key){
+        // Switching a tile back off returns you to the tab you were reading,
+        // rather than leaving you on the All tab the filter had to borrow.
+        view.focus = null;
+        if (view.tabBeforeFocus){ view.tab = view.tabBeforeFocus; view.tabBeforeFocus = null; }
+      } else {
+        // The tab would otherwise hide most of what was just asked for.
+        if (!view.focus) view.tabBeforeFocus = view.tab;
+        view.focus = key;
+        view.tab = 'all';
+      }
+      renderAll();
+    });
+
+    document.getElementById('modeBookings').addEventListener('click', function(){ setMode('bookings'); });
+    document.getElementById('modeEvents').addEventListener('click', function(){ setMode('events'); });
+    document.getElementById('topAdd').addEventListener('click', function(){
+      if (mode === 'events'){
+        if (!TABLE_OK.events){ showToast('The events table isn\u2019t set up yet — see the README.'); return; }
+        openEventForm(null);
+      } else openForm(null);
     });
     document.getElementById('fabNewEvent').addEventListener('click', function(){
       if (!TABLE_OK.events){ showToast('The events table isn’t set up yet — see the README.'); return; }
