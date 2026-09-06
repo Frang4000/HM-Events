@@ -131,6 +131,28 @@
   }
   .areaswitch:active{ background:rgba(244,241,226,.22); transform:scale(.97); }
   .topbar{ position:relative; }
+  /* Mirrors the board switch on the other side of the band. */
+  .settingsbtn{
+    left:auto; right:12px; padding:8px 0; width:40px; text-align:center;
+    font-size:16px; line-height:1;
+  }
+
+  .themerow{ display:flex; gap:8px; }
+  .themeopt{
+    flex:1; border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    border-radius:9px; padding:11px 6px; font-size:13px; font-weight:600; cursor:pointer;
+    min-height:46px;
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+  }
+  .themeopt.on{
+    background:var(--accent-soft); border-color:var(--accent); color:var(--accent-ink);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .themeopt:hover{ border-color:var(--line-strong); }
+    .themeopt.on:hover{ border-color:var(--accent-strong); }
+  }
+  .themeopt:active{ transform:scale(.97); }
 
   .paste-key{
     font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:11px; line-height:1.5;
@@ -694,7 +716,9 @@
     .tool-label{ margin-top:8px; font-size:11px; }
     .subhead{ margin-top:3px; font-size:12px; }
     .tc-btn{ margin-top:10px; min-height:36px; padding:7px 15px; font-size:12px; }
-    .areaswitch{ top:14px; left:16px; min-height:36px; padding:7px 15px; font-size:12px; }
+    #modeSwitch{ top:14px; left:16px; }
+    .areaswitch{ min-height:36px; padding:7px 15px; font-size:12px; }
+    .settingsbtn{ top:14px; right:16px; padding:7px 0; width:38px; }
 
     /* Two across instead of one long column down the middle of an empty
        screen. align-items:start keeps a card its own height, so expanding one
@@ -725,7 +749,9 @@
     .tool-label{ margin-top:6px; letter-spacing:.1em; }
     .subhead{ margin-top:2px; }
     .tc-btn{ margin-top:8px; min-height:32px; padding:6px 13px; }
-    .areaswitch{ top:10px; min-height:32px; padding:6px 13px; }
+    .areaswitch{ min-height:32px; padding:6px 13px; }
+    #modeSwitch{ top:10px; }
+    .settingsbtn{ top:10px; padding:6px 0; width:36px; }
     .stats{ padding:0 18px 10px; }
     .stat{ padding:7px 4px; }
     .controls{ padding:0 18px 8px; }
@@ -742,12 +768,25 @@
   .topbar :focus-visible, .auth-gate :focus-visible{ outline-color:var(--gold); }
 </style>
 
+<script>
+  // Runs before the body is painted, so a device set to dark never flashes
+  // the light palette on the way in. The CSS already understands the
+  // attribute; this only decides whether to set it.
+  (function(){
+    try{
+      var t = localStorage.getItem('functionSheetTheme');
+      if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+    }catch(e){}
+  })();
+</script>
+
 <div id="page-root">
 <div id="app">
   <div class="topbar">
     <button class="areaswitch" id="modeSwitch" type="button">
       <span id="modeSwitchLabel">📅 Upcoming events</span>
     </button>
+    <button class="areaswitch settingsbtn" id="settingsOpen" type="button" aria-label="Settings">⚙</button>
     <h1><img class="brand-logo" src="logo.png" alt="Hotel Maroubra"></h1>
     <p class="tool-label">Event Bookings</p>
     <p class="subhead" id="dateline"></p>
@@ -800,7 +839,6 @@
   </div>
 
   <p class="footer-note" id="storageNote"></p>
-  <button class="signout" id="signOut" type="button">Sign out of this device</button>
   <p class="credit">Hotel Maroubra — built in-house by Alex Frangos</p>
 </div>
 
@@ -1127,6 +1165,35 @@
     <div class="dialog-foot">
       <button type="button" class="btn" id="eventConfirmNo">Keep it</button>
       <button type="button" class="btn danger" id="eventConfirmYes">Remove</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="settingsDialog">
+  <div class="dialog-inner">
+    <div class="dialog-head">
+      <h2>Settings</h2>
+      <button class="closex" id="settingsClose" type="button" aria-label="Close">✕</button>
+    </div>
+
+    <div class="field">
+      <label>Appearance</label>
+      <div class="themerow" id="themeRow">
+        <button type="button" class="themeopt" data-theme-set="light">☀️ Light</button>
+        <button type="button" class="themeopt" data-theme-set="dark">🌙 Dark</button>
+        <button type="button" class="themeopt" data-theme-set="system">💻 System</button>
+      </div>
+      <p class="hint" id="themeHint">Follows whatever this device is set to.</p>
+    </div>
+
+    <div class="field">
+      <label>This device</label>
+      <button class="btn danger" id="signOut" type="button" style="width:100%">Sign out of this device</button>
+      <p class="hint">Signs this device out only. Everyone else stays signed in.</p>
+    </div>
+
+    <div class="dialog-foot">
+      <button type="button" class="btn primary" id="settingsDone">Done</button>
     </div>
   </div>
 </dialog>
@@ -1691,6 +1758,45 @@
     if (openEventId === id) openEventId = null;
     renderAll();
     saveEvents(next, previous, function(){});
+  }
+
+  // ---------------- settings ----------------
+  // The choice is per device, like the sign-in itself: a manager can have the
+  // pass phone on dark behind the bar and the office machine on light.
+  var THEME_KEY = 'functionSheetTheme';
+  function storedTheme(){
+    try{
+      var t = localStorage.getItem(THEME_KEY);
+      return (t === 'light' || t === 'dark') ? t : 'system';
+    }catch(e){ return 'system'; }
+  }
+  function applyTheme(choice){
+    var root = document.documentElement;
+    if (choice === 'light' || choice === 'dark') root.setAttribute('data-theme', choice);
+    else root.removeAttribute('data-theme');
+    try{
+      if (choice === 'system') localStorage.removeItem(THEME_KEY);
+      else localStorage.setItem(THEME_KEY, choice);
+    }catch(e){}
+    // The browser chrome on a phone is painted from this, so it has to follow.
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', '#1F4925');
+    renderThemeChoice();
+  }
+  function renderThemeChoice(){
+    var choice = storedTheme();
+    var opts = document.querySelectorAll('#themeRow .themeopt');
+    for (var i = 0; i < opts.length; i++){
+      var on = opts[i].getAttribute('data-theme-set') === choice;
+      opts[i].classList.toggle('on', on);
+      opts[i].setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    var hint = document.getElementById('themeHint');
+    if (hint){
+      hint.textContent = choice === 'system'
+        ? 'Follows whatever this device is set to.'
+        : 'Set to ' + choice + ' on this device, whatever the device is set to.';
+    }
   }
 
   // ---------------- pasting a week of fixtures ----------------
@@ -2872,6 +2978,21 @@
     });
     document.getElementById('termsCopy').addEventListener('click', copyTerms);
 
+    document.getElementById('settingsOpen').addEventListener('click', function(){
+      renderThemeChoice();
+      document.getElementById('settingsDialog').showModal();
+    });
+    document.getElementById('settingsClose').addEventListener('click', function(){
+      document.getElementById('settingsDialog').close();
+    });
+    document.getElementById('settingsDone').addEventListener('click', function(){
+      document.getElementById('settingsDialog').close();
+    });
+    document.getElementById('themeRow').addEventListener('click', function(e){
+      var btn = e.target.closest('[data-theme-set]');
+      if (btn) applyTheme(btn.getAttribute('data-theme-set'));
+    });
+
     document.getElementById('modeSwitch').addEventListener('click', function(){
       setMode(mode === 'events' ? 'bookings' : 'events');
     });
@@ -3183,6 +3304,7 @@
       });
     });
     document.getElementById('signOut').addEventListener('click', function(){
+      document.getElementById('settingsDialog').close();
       dropSession();
       state = { bookings: [], events: [] };
       renderAll();
@@ -3194,6 +3316,7 @@
     renderAll();
     // Static content — built once, not on every re-render.
     renderTerms();
+    renderThemeChoice();
     // Lets a phone's password manager store the shared staff password
     // against a username, and quiets the browser's accessibility warning.
     document.getElementById('authUser').value = CFG.staffEmail || 'staff';

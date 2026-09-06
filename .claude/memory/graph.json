@@ -566,6 +566,38 @@
         "touch-targets-40px"
       ],
       "date": "2026-09-05"
+    },
+    {
+      "id": "settings-and-theme",
+      "type": "decision",
+      "title": "A settings button holds appearance and sign out",
+      "tags": [
+        "settings",
+        "theme",
+        "ui"
+      ],
+      "what": "A gear top-right of the brand band, mirroring the board switch on the left. Holds Light / Dark / System and the sign out, which moved out of the footer. The choice is per device in localStorage and applied by a tiny script before the body paints, so a dark device never flashes light.",
+      "why": "The CSS already carried both :root:not([data-theme=light]) and :root[data-theme=dark], so only the control was missing. System stays the default so nothing changes for anyone who does not go looking.",
+      "relates_to": [
+        "laptop-breakpoint"
+      ],
+      "date": "2026-09-06"
+    },
+    {
+      "id": "later-rule-wins-across-media",
+      "type": "gotcha",
+      "title": "A media query later in the file beats an earlier plain rule",
+      "tags": [
+        "css",
+        "specificity"
+      ],
+      "what": "The settings button carries .areaswitch for its styling, and the desktop block set .areaswitch{left:16px} further down the file — so it landed on the left despite .settingsbtn{left:auto;right:12px}. Fixed by scoping the left-hand positioning to #modeSwitch.",
+      "why": "A media query adds no specificity; source order still decides. Sharing a class with something positioned differently is the trap.",
+      "relates_to": [
+        "visually-hidden-overridden",
+        "explicit-display-beats-hidden"
+      ],
+      "date": "2026-09-06"
     }
   ]
 }

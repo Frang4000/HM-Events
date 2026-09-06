@@ -167,7 +167,8 @@ lock. So:
 - *CSRF tokens* aren't needed. The session is a token sent in a header, not a
   cookie, so another site can't make the browser send it along.
 
-**A phone stays signed in until someone taps "Sign out of this phone."** If a
+**A device stays signed in until someone opens ⚙ Settings and taps "Sign out of
+this device."** If a
 phone is lost, change the password — that is what cuts every device off.
 
 **The data is personal information.** Customer names, phone numbers and payment
