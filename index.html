@@ -39,6 +39,8 @@
     --p-high:#A23E63; --p-high-soft:#F7E4EB;
     --p-urgent:#C6323B; --p-urgent-soft:#FBE3E4;
     --shadow: 0 1px 2px rgba(20,25,35,.06), 0 6px 20px -8px rgba(20,25,35,.18);
+    --dur:150ms; --dur-fast:120ms; --dur-slow:180ms;
+    --ease:cubic-bezier(.22,.72,.32,1);
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
@@ -84,7 +86,7 @@
   }
   /* Phone-first touch behaviour: no 300ms tap delay, no grey flash, and
      nothing a thumb has to aim at is smaller than a fingertip. */
-  button, .tab, .chip, label.checkopt{
+  button, .tab, .chip, label.checkopt, .file-thumb, .card-head{
     touch-action:manipulation; -webkit-tap-highlight-color:transparent;
   }
   @media (prefers-reduced-motion: reduce){
@@ -122,8 +124,12 @@
     color:var(--gold); border-radius:999px; padding:8px 14px;
     font-size:12.5px; font-weight:600; cursor:pointer; min-height:40px;
     max-width:calc(100% - 24px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
-  .areaswitch:active{ background:rgba(244,241,226,.2); }
+  @media (hover:hover) and (pointer:fine){
+    .areaswitch:hover{ background:rgba(244,241,226,.16); border-color:var(--gold); }
+  }
+  .areaswitch:active{ background:rgba(244,241,226,.22); transform:scale(.97); }
   .topbar{ position:relative; }
 
   .paste-key{
@@ -160,8 +166,12 @@
     background:rgba(244,241,226,.08); border:1px solid rgba(200,161,68,.5);
     color:var(--gold); border-radius:999px; padding:9px 16px;
     font-size:12.5px; font-weight:600; cursor:pointer; min-height:40px;
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
-  .tc-btn:active{ background:rgba(244,241,226,.16); }
+  @media (hover:hover) and (pointer:fine){
+    .tc-btn:hover{ background:rgba(244,241,226,.15); border-color:var(--gold); }
+  }
+  .tc-btn:active{ background:rgba(244,241,226,.2); transform:scale(.97); }
 
   .terms-intro{ color:var(--ink-soft); font-size:13px; line-height:1.5; margin:0 0 18px; }
   .terms-sec{ margin-bottom:18px; }
@@ -193,8 +203,15 @@
   .banner button{
     border:none; background:var(--accent); color:#fff; padding:6px 12px; border-radius:7px;
     font-weight:600; font-size:12.5px; cursor:pointer; flex:none;
+    transition:filter var(--dur) var(--ease), opacity var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
   .banner button.ghost{ background:transparent; color:inherit; text-decoration:underline; padding:6px 4px; }
+  @media (hover:hover) and (pointer:fine){
+    .banner button:hover{ filter:brightness(1.08); }
+    .banner button.ghost:hover{ filter:none; opacity:.7; }
+  }
+  .banner button:active{ filter:brightness(.9); transform:scale(.97); }
+  .banner button.ghost:active{ filter:none; opacity:.55; transform:none; }
   .banner[hidden]{display:none;}
 
   /* ---------- stats ---------- */
@@ -222,8 +239,15 @@
     flex:none; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
     padding:8px 13px; border-radius:999px; font-size:13px; font-weight:600; cursor:pointer;
     white-space:nowrap; min-height:38px;
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease), opacity var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
   .tab.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  @media (hover:hover) and (pointer:fine){
+    .tab:not(.active):hover{ background:var(--surface-2); border-color:var(--line-strong); color:var(--ink); }
+    .tab.active:hover{ opacity:.88; }
+  }
+  .tab:active{ transform:scale(.96); }
   .tab .n{ font-family:'IBM Plex Mono',monospace; opacity:.75; margin-left:4px; }
 
   .searchrow{ display:flex; gap:8px; margin:8px 0; }
@@ -232,7 +256,12 @@
        pushes the Paste button off a narrow phone. */
     flex:1; min-width:0; border:1px solid var(--line); background:var(--surface);
     border-radius:9px; padding:9px 12px; color:var(--ink);
+    transition:border-color var(--dur) var(--ease);
   }
+  @media (hover:hover) and (pointer:fine){
+    .searchrow input:hover{ border-color:var(--line-strong); }
+  }
+  .searchrow input:focus-visible{ border-color:var(--accent); }
   .searchrow .btn{ flex:none; padding:9px 12px; font-size:12.5px; }
   .searchrow input::placeholder{ color:var(--ink-faint); }
 
@@ -241,8 +270,15 @@
     border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
     padding:7px 12px; border-radius:999px; font-size:12.5px; font-weight:500; cursor:pointer;
     min-height:34px;
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
   .chip.on{ background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent); }
+  @media (hover:hover) and (pointer:fine){
+    .chip:not(.on):hover{ background:var(--surface-2); border-color:var(--line-strong); color:var(--ink); }
+    .chip.on:hover{ border-color:var(--accent-strong); }
+  }
+  .chip:active{ transform:scale(.95); }
 
   .legend{ display:flex; gap:12px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-soft); padding:2px 0 4px; }
   .legend b{ color:var(--ink); }
@@ -250,7 +286,7 @@
   .legend .dot{ width:9px; height:9px; border-radius:3px; display:inline-block; }
 
   /* ---------- list & cards ---------- */
-  #list{ padding:4px 14px 8px; display:flex; flex-direction:column; gap:10px; }
+  #list, #eventList{ padding:4px 14px 8px; display:flex; flex-direction:column; gap:10px; }
   .empty{
     text-align:center; padding:48px 20px; color:var(--ink-soft); font-size:14px;
   }
@@ -261,7 +297,14 @@
     box-shadow:var(--shadow); border-left:6px solid var(--band-color, var(--line));
     overflow:hidden;
   }
-  .card-head{ display:flex; gap:12px; padding:12px 13px 10px; cursor:pointer; align-items:flex-start; }
+  .card-head{
+    display:flex; gap:12px; padding:12px 13px 10px; cursor:pointer; align-items:flex-start;
+    transition:background var(--dur) var(--ease);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .card-head:hover{ background:var(--surface-2); }
+  }
+  .card-head:active{ background:var(--surface-2); }
   .datebadge{
     flex:none; width:52px; text-align:center; padding:5px 0 6px; border-radius:9px;
     background:var(--surface-2);
@@ -329,7 +372,12 @@
   .file-thumb{
     width:64px; height:64px; border-radius:9px; border:1px solid var(--line); overflow:hidden;
     background:var(--surface-2); position:relative; cursor:pointer; flex:none;
+    transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
+  @media (hover:hover) and (pointer:fine){
+    .file-thumb:hover{ border-color:var(--accent); box-shadow:var(--shadow); }
+  }
+  .file-thumb:active{ transform:scale(.96); }
   .file-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
   .file-thumb .pdf{ display:flex; align-items:center; justify-content:center; height:100%; font-size:10px; font-weight:700; color:var(--ink-soft); }
   .file-empty{ font-size:12.5px; color:var(--ink-faint); font-style:italic; }
@@ -339,13 +387,26 @@
     border:1px solid var(--line); background:var(--surface); color:var(--ink);
     padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
     min-height:42px;
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      color var(--dur) var(--ease), filter var(--dur) var(--ease), transform var(--dur-fast) var(--ease),
+      box-shadow var(--dur) var(--ease);
   }
   /* Primary actions use the fixed brand gold+green pairing (not the
      theme-swapped --accent) so they read correctly in both themes, the
-     same way the logo's own gold-on-green always does. */
+     same way the logo's own gold-on-green always does. Hover/press feedback
+     on them uses filter (brightness), never a different colour, so the
+     brand pairing itself never changes. */
   .btn.primary{ background:var(--gold); border-color:var(--gold); color:var(--brand-green-deep); }
   .btn.danger{ color:var(--danger); border-color:var(--danger-soft); }
   .btn:disabled{ opacity:.55; cursor:not-allowed; }
+  @media (hover:hover) and (pointer:fine){
+    .btn:not(:disabled):hover{ border-color:var(--line-strong); background:var(--surface-2); }
+    .btn.primary:not(:disabled):hover{ filter:brightness(1.06); background:var(--gold); border-color:var(--gold); }
+    .btn.danger:not(:disabled):hover{ background:var(--danger-soft); border-color:var(--danger); }
+  }
+  .btn:not(:disabled):active{ transform:scale(.97); }
+  .btn.primary:not(:disabled):active{ filter:brightness(.92); }
+  .btn.danger:not(:disabled):active{ background:var(--danger-soft); filter:brightness(.96); }
   body.read-only .write-only{ display:none !important; }
 
   /* ---------- bottom action bar ----------
@@ -365,8 +426,12 @@
     border-radius:999px; padding:15px 22px; font-size:15.5px; font-weight:700; cursor:pointer;
     box-shadow:0 8px 24px -8px rgba(0,0,0,.45); display:flex; align-items:center;
     justify-content:center; gap:8px; min-height:54px; pointer-events:auto;
+    transition:filter var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
-  .fab:active{ transform:scale(.985); }
+  @media (hover:hover) and (pointer:fine){
+    .fab:hover{ filter:brightness(1.05); box-shadow:0 10px 28px -8px rgba(0,0,0,.5); }
+  }
+  .fab:active{ transform:scale(.985); filter:brightness(.93); }
   /* An explicit display beats the hidden attribute, so these have to say so
      themselves — the same trap the deposit block fell into. */
   .fab[hidden], .stats[hidden], .tabs[hidden]{ display:none; }
@@ -412,7 +477,12 @@
   .closex{
     border:none; background:var(--surface-2); color:var(--ink-soft); width:42px; height:42px;
     border-radius:999px; cursor:pointer; font-size:17px; line-height:1; flex:none;
+    transition:filter var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
+  @media (hover:hover) and (pointer:fine){
+    .closex:hover{ filter:brightness(.94); color:var(--ink); }
+  }
+  .closex:active{ filter:brightness(.88); transform:scale(.92); }
 
   .field{ margin-bottom:13px; }
   .field label{ display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:5px; }
@@ -420,6 +490,13 @@
   .field input, .field select, .field textarea{
     width:100%; border:1px solid var(--line); background:var(--paper); border-radius:9px;
     padding:11px; color:var(--ink); min-height:46px;
+    transition:border-color var(--dur) var(--ease);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .field input:hover, .field select:hover, .field textarea:hover{ border-color:var(--line-strong); }
+  }
+  .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible{
+    border-color:var(--accent);
   }
   .field input[type="checkbox"]{ min-height:0; }
   .field textarea{ resize:vertical; min-height:64px; }
@@ -431,7 +508,12 @@
     flex:1; display:flex; align-items:center; gap:8px; border:1px solid var(--line);
     background:var(--paper); border-radius:9px; padding:10px 12px; font-size:14px;
     font-weight:600; cursor:pointer; color:var(--ink);
+    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
+  @media (hover:hover) and (pointer:fine){
+    .checkopt:not(.off):hover{ background:var(--surface-2); border-color:var(--line-strong); }
+  }
+  .checkopt:not(.off):active{ transform:scale(.98); }
   .checkopt input{ width:17px; height:17px; accent-color:var(--accent); flex:none; }
   .deposit-note{
     font-size:12.5px; color:var(--ink-soft); background:var(--surface-2); border-radius:9px;
@@ -451,7 +533,12 @@
     border:1px dashed var(--line-strong); background:var(--surface-2); color:var(--ink-soft);
     padding:12px; border-radius:9px; font-size:12.5px; font-weight:600; cursor:pointer; width:100%;
     min-height:46px;
+    transition:border-color var(--dur) var(--ease), color var(--dur) var(--ease), filter var(--dur) var(--ease);
   }
+  @media (hover:hover) and (pointer:fine){
+    .uploadbtn:hover{ border-color:var(--accent); color:var(--accent); }
+  }
+  .uploadbtn:active{ filter:brightness(.96); }
   .draftfiles{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
   .draftfile{ width:68px; height:68px; border-radius:8px; overflow:hidden; position:relative; border:1px solid var(--line); background:var(--surface); }
   .draftfile img{ width:100%; height:100%; object-fit:cover; }
@@ -460,7 +547,12 @@
     position:absolute; top:2px; right:2px; width:24px; height:24px; border-radius:999px; border:none;
     background:rgba(20,20,20,.78); color:#fff; font-size:13px; line-height:1; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
+    transition:background var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
+  @media (hover:hover) and (pointer:fine){
+    .draftfile .rm:hover{ background:rgba(20,20,20,.92); }
+  }
+  .draftfile .rm:active{ background:rgba(20,20,20,.96); transform:scale(.9); }
 
   .sizebudget{ font-size:11px; color:var(--ink-faint); margin-top:10px; text-align:right; }
 
@@ -490,7 +582,12 @@
   #lightbox .lbclose{
     position:absolute; top:-14px; right:-14px; width:34px; height:34px; border-radius:999px; border:none;
     background:var(--surface); color:var(--ink); font-size:16px; cursor:pointer; box-shadow:var(--shadow);
+    transition:filter var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
+  @media (hover:hover) and (pointer:fine){
+    #lightbox .lbclose:hover{ filter:brightness(.94); }
+  }
+  #lightbox .lbclose:active{ filter:brightness(.88); transform:scale(.92); }
   #lightbox .lbwrap{ position:relative; }
 
   /* toast */
@@ -557,6 +654,10 @@
   .auth-card input{
     width:100%; border:1px solid rgba(244,241,226,.28); background:rgba(0,0,0,.22);
     border-radius:10px; padding:13px; color:#F4F1E2; font-size:16px; min-height:50px;
+    transition:border-color var(--dur) var(--ease);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .auth-card input:hover{ border-color:rgba(244,241,226,.45); }
   }
   .auth-card input::placeholder{ color:rgba(244,241,226,.4); }
   .auth-card .btn.primary{ width:100%; margin-top:14px; min-height:52px; font-size:15.5px; }
@@ -574,10 +675,71 @@
   .signout{
     background:none; border:none; color:var(--ink-faint); font-size:10.5px;
     text-decoration:underline; cursor:pointer; padding:4px 8px; margin-bottom:8px;
+    transition:color var(--dur) var(--ease), opacity var(--dur) var(--ease);
+  }
+  @media (hover:hover) and (pointer:fine){
+    .signout:hover{ color:var(--ink); }
+  }
+  .signout:active{ opacity:.65; }
+
+  /* ---------- laptop ----------
+     The whole page was phone-shaped at every width: a 640px column stranded in
+     the middle of a 1512px screen, 526px of header and controls before the
+     first booking, and a thumb-width gold bar across the bottom. None of that
+     is wrong on a phone; all of it looks borrowed on a laptop. */
+  @media (min-width: 1024px){
+    /* The header was 280px tall and only half of that was the logo. */
+    .topbar{ padding:16px 20px 14px; border-radius:0 0 24px 24px; }
+    .brand-logo{ width:104px; }
+    .tool-label{ margin-top:8px; font-size:11px; }
+    .subhead{ margin-top:3px; font-size:12px; }
+    .tc-btn{ margin-top:10px; min-height:36px; padding:7px 15px; font-size:12px; }
+    .areaswitch{ top:14px; left:16px; min-height:36px; padding:7px 15px; font-size:12px; }
+
+    /* Two across instead of one long column down the middle of an empty
+       screen. align-items:start keeps a card its own height, so expanding one
+       lengthens only that card rather than stretching its neighbour. */
+    #app{ max-width:1140px; }
+    #list, #eventList{
+      display:grid; grid-template-columns:repeat(2, minmax(0,1fr));
+      align-items:start; gap:12px 16px; padding:6px 18px 10px;
+    }
+    #list .empty, #eventList .empty{ grid-column:1 / -1; }
+    .stats{ padding:0 18px 14px; }
+    .controls{ padding:0 18px 12px; }
+
+    /* A button a mouse clicks once, not a bar a thumb reaches for blind. */
+    .actionbar{ justify-content:center; padding:16px 18px 18px; }
+    .fab{ flex:none; width:auto; min-width:230px; padding:13px 28px;
+          font-size:14.5px; min-height:48px; }
+
+    /* Body text past about 70 characters a line gets tiring at a desk. */
+    .terms-intro, .terms-sec li, .paste-sum{ max-width:66ch; }
+  }
+
+  /* A 13-inch work laptop is wide but short. Same layout, less of it spent
+     on the brand before the first booking appears. */
+  @media (min-width: 1024px) and (max-height: 820px){
+    .topbar{ padding:12px 20px 10px; }
+    .brand-logo{ width:78px; }
+    .tool-label{ margin-top:6px; letter-spacing:.1em; }
+    .subhead{ margin-top:2px; }
+    .tc-btn{ margin-top:8px; min-height:32px; padding:6px 13px; }
+    .areaswitch{ top:10px; min-height:32px; padding:6px 13px; }
+    .stats{ padding:0 18px 10px; }
+    .stat{ padding:7px 4px; }
+    .controls{ padding:0 18px 8px; }
+    .legend{ font-size:11px; }
   }
 
   ::selection{ background:var(--accent-soft); color:var(--accent-ink); }
-  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
+  /* The brand band (header + sign-in gate) is the fixed green in both
+     themes; the themed --accent ring can lose contrast against it
+     (light mode's --accent is a dark gold-brown), so on that band the
+     ring uses the fixed --gold instead — same token the band's own text
+     already uses. */
+  .topbar :focus-visible, .auth-gate :focus-visible{ outline-color:var(--gold); }
 </style>
 
 <div id="page-root">
@@ -637,7 +799,7 @@
   </div>
 
   <p class="footer-note" id="storageNote"></p>
-  <button class="signout" id="signOut" type="button">Sign out of this phone</button>
+  <button class="signout" id="signOut" type="button">Sign out of this device</button>
   <p class="credit">Hotel Maroubra — built in-house by Alex Frangos</p>
 </div>
 
@@ -1158,6 +1320,8 @@
   // something we sold, an event is something happening in Sydney that will
   // fill the place whether we like it or not.
   var mode = 'bookings';
+  // Nothing has been fetched yet, so the board must not claim to be empty.
+  var loadedOnce = false;
   var eventView = { tab: 'upcoming', search: '' };
   var openEventId = null;
   var isReadOnly = false;
@@ -1302,6 +1466,10 @@
     var list = visibleBookings();
     var host = document.getElementById('list');
     if (!list.length){
+      if (!loadedOnce){
+        host.innerHTML = '<div class="empty"><b>Loading the sheet…</b></div>';
+        return;
+      }
       var msg = state.bookings.length ? 'Nothing here' : 'No bookings yet';
       var sub = state.bookings.length ? 'Try a different tab or filter.' : 'Tap “+ New booking” when one comes in.';
       host.innerHTML = '<div class="empty"><b>'+msg+'</b>'+sub+'</div>';
@@ -1784,6 +1952,10 @@
     var list = visibleEvents();
     var host = document.getElementById('eventList');
     if (!list.length){
+      if (!loadedOnce){
+        host.innerHTML = '<div class="empty"><b>Loading…</b></div>';
+        return;
+      }
       var has = (state.events || []).length;
       host.innerHTML = '<div class="empty"><b>'+(has ? 'Nothing here' : 'No events yet')+'</b>'+
         (has ? 'Try a different tab or search.' : 'Tap “+ New event” to put one in.')+'</div>';
@@ -1809,6 +1981,21 @@
     document.getElementById('staleBanner').hidden = isEvents || !staleBookings().length;
     renderAll();
     try{ window.scrollTo(0, 0); }catch(err){}
+  }
+
+  // A card that opens off-screen reads as a dead click. Only ever scrolls
+  // down to reveal, never yanks the page around when one is collapsed.
+  function revealOpenCard(selector){
+    var el = document.querySelector(selector);
+    if (!el) return;
+    var bar = document.querySelector('.actionbar');
+    var floor = bar && !bar.hidden ? bar.getBoundingClientRect().top : window.innerHeight;
+    var r = el.getBoundingClientRect();
+    if (r.bottom <= floor && r.top >= 0) return;          // already all visible
+    var wanted = Math.min(r.top - 12, r.bottom - floor + 16);
+    if (wanted <= 0) return;                              // would scroll upward
+    try { window.scrollBy({ top: wanted, behavior: 'smooth' }); }
+    catch (e) { window.scrollBy(0, wanted); }
   }
 
   function renderAll(){
@@ -2071,12 +2258,18 @@
   }
 
   function loadBookings(){
-    return probeColumns().then(function(){
-      return apiFetch('/bookings?select=*', { method: 'GET', headers: {} });
-    }).then(function(rows){
+    // The probe and the bookings themselves go out together. The probe only
+    // decides what to send on a later write, so making the board wait for it
+    // just added a round trip in front of the first thing anyone sees.
+    return Promise.all([
+      probeColumns(),
+      apiFetch('/bookings?select=*', { method: 'GET', headers: {} })
+    ]).then(function(both){
+      var rows = both[1];
       state = { bookings: (rows || []).map(rowToBooking), events: state.events || [] };
       return loadEvents();
     }).then(function(){
+      loadedOnce = true;
       renderAll();
       return state;
     });
@@ -2136,17 +2329,23 @@
 
   // Someone else's booking should turn up without anyone reloading.
   var polling = false;
+  // Refreshing under someone who is part-way through typing is worse than
+  // being a few seconds stale.
+  function anyDialogOpen(){
+    return ['bookingDialog','confirmDialog','eventDialog','eventConfirm','pasteDialog']
+      .some(function(id){ var d = document.getElementById(id); return d && d.open; });
+  }
+
   function startPolling(){
     if (polling) return;
     polling = true;
     setInterval(function(){
       if (document.hidden) return;
-      if (document.getElementById('bookingDialog').open) return;
-      if (document.getElementById('confirmDialog').open) return;
+      if (anyDialogOpen()) return;
       loadBookings().catch(function(){});
     }, POLL_MS);
     document.addEventListener('visibilitychange', function(){
-      if (!document.hidden && session && !document.getElementById('bookingDialog').open){
+      if (!document.hidden && session && !anyDialogOpen()){
         loadBookings().catch(function(){});
       }
     });
@@ -2626,8 +2825,10 @@
       var head = e.target.closest('[data-toggle]');
       if (head){
         var id2 = head.getAttribute('data-toggle');
-        openCardId = openCardId === id2 ? null : id2;
+        var opening = openCardId !== id2;
+        openCardId = opening ? id2 : null;
         renderList();
+        if (opening) revealOpenCard('#list .card.open');
       }
     });
 
@@ -2686,8 +2887,11 @@
                document.getElementById('eventConfirm').showModal(); return; }
       var tg = e.target.closest('[data-etoggle]');
       if (tg){ var id = tg.getAttribute('data-etoggle');
-               openEventId = (openEventId === id) ? null : id;
-               renderEventList(); return; }
+               var openingEv = openEventId !== id;
+               openEventId = openingEv ? id : null;
+               renderEventList();
+               if (openingEv) revealOpenCard('#eventList .card.open');
+               return; }
     });
     document.getElementById('eventConfirmNo').addEventListener('click', function(){
       pendingEventDelete = null; document.getElementById('eventConfirm').close();
