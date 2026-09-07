@@ -31,6 +31,7 @@
     --ink:#17241A; --ink-soft:#55624F; --ink-faint:#8B9483;
     --line:#E0D8BE; --line-strong:#CBC09E;
     --accent:#8A6A1A; --accent-strong:#6E5313; --accent-soft:#F1E6C4; --accent-ink:#4A3A10;
+    --on-accent:#FFFFFF;      /* text on a filled accent / warn / danger */
     --danger:#B3261E; --danger-soft:#FBE7E5;
     --warn:#B2560E; --warn-soft:#FBE9D8;
     --good:#256B4C; --good-soft:#E1F1E8;
@@ -49,6 +50,7 @@
       --ink:#EDEEE6; --ink-soft:#A9B39F; --ink-faint:#77816F;
       --line:#2C382A; --line-strong:#3B4A37;
       --accent:#D9B95C; --accent-strong:#E8CC85; --accent-soft:#3A2F14; --accent-ink:#F1DDA6;
+      --on-accent:#17241A;
       --danger:#E5645C; --danger-soft:#3A1E1D;
       --warn:#E5985A; --warn-soft:#3A2814;
       --good:#63C596; --good-soft:#123527;
@@ -65,6 +67,7 @@
     --ink:#EDEEE6; --ink-soft:#A9B39F; --ink-faint:#77816F;
     --line:#2C382A; --line-strong:#3B4A37;
     --accent:#D9B95C; --accent-strong:#E8CC85; --accent-soft:#3A2F14; --accent-ink:#F1DDA6;
+    --on-accent:#17241A;
     --danger:#E5645C; --danger-soft:#3A1E1D;
     --warn:#E5985A; --warn-soft:#3A2814;
     --good:#63C596; --good-soft:#123527;
@@ -152,6 +155,9 @@
     display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.05em;
     text-transform:uppercase; padding:3px 8px; border-radius:999px;
     background:var(--surface-2); color:var(--ink-soft);
+    /* sport is free text from the paste importer; without this a long one
+       shoved the crowd pill off the right of the card. */
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .ev-kind.sport{ background:var(--accent-soft); color:var(--accent-ink); }
   .ev-screens{ font-size:11.5px; color:var(--good); font-weight:600; }
@@ -189,8 +195,11 @@
   .banner.stale{ background:var(--warn-soft); color:var(--warn); border:1px solid var(--warn); }
   .banner.stale button{ background:var(--warn); }
   .banner button{
-    border:none; background:var(--accent); color:#fff; padding:6px 12px; border-radius:7px;
-    font-weight:600; font-size:12.5px; cursor:pointer; flex:none;
+    /* Not #fff: --accent and --warn both lighten in dark mode, which put
+       white on 1.9:1. --on-brand-ink is dark in both themes. */
+    border:none; background:var(--accent); color:var(--on-accent);
+    padding:9px 14px; border-radius:8px; min-height:40px;
+    font-weight:600; font-size:13px; cursor:pointer; flex:none;
     transition:filter var(--dur) var(--ease), opacity var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
   }
   .banner button.ghost{ background:transparent; color:inherit; text-decoration:underline; padding:6px 4px; }
@@ -434,8 +443,14 @@
     dialog{ border-radius:16px; margin:auto; }
   }
   dialog::backdrop{ background:rgba(10,12,16,.55); }
+  /* And a scroll over the backdrop itself has nothing to chain from, so
+     the page is held still for as long as any sheet is open. */
+  html.dialog-open{ overflow:hidden; overscroll-behavior:none; }
   .dialog-inner{
-    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    /* Without this, a scroll that reaches the end of the sheet chains
+       through to the page behind and leaves the manager somewhere else in
+       the list when the sheet closes. */
+    overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
     max-height:92vh; max-height:92dvh;
     padding:0 16px calc(20px + env(safe-area-inset-bottom));
   }
@@ -652,14 +667,17 @@
   .auth-note code{ color:var(--gold); font-family:'IBM Plex Mono',monospace; }
 
   .sync-dot{
-    /* Centred under the bar: top-right now belongs to Settings. */
-    /* Below the segment, not across it. */
-    position:fixed; top:128px; left:50%; transform:translateX(-50%); z-index:30;
+    /* Above the thumb bar rather than a fixed offset under the header:
+       measured from the top it landed on the Settings button, then on
+       the segment, then on the On tonight heading as the layout moved. */
+    position:fixed; bottom:calc(78px + env(safe-area-inset-bottom));
+    left:50%; transform:translateX(-50%); z-index:30;
     background:var(--gold); color:var(--brand-green-deep); font-size:10.5px; font-weight:700;
     padding:4px 10px; border-radius:999px; letter-spacing:.04em; white-space:nowrap;
+    pointer-events:none;              /* it only ever reports; it never takes a tap */
     box-shadow:0 4px 14px -6px rgba(0,0,0,.5);
   }
-  .sync-dot.stalled{ background:var(--danger); color:#fff; }
+  .sync-dot.stalled{ background:var(--danger); color:var(--on-accent); }
   .sync-dot[hidden]{ display:none; }
   .signout{
     background:none; border:none; color:var(--ink-faint); font-size:10.5px;
@@ -798,18 +816,16 @@
   }
 
   /* --- 4. stat tiles --- */
-  /* Two rows of two cost 81px of a phone screen that the board needs for
-     bookings. Four across fits from 360px; only a 320px handset needs the
-     stack. */
-  .stats{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px 14px 0; }
-  @media (min-width: 360px){
-    .stats{ grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
-    .stat{ padding:10px 8px; }
-    /* A quarter of a phone is 52px of label; "bookings" at 12px wants 54. */
-    .stat span{ font-size:10.5px; }
-    .stat b.num{ font-size:21px; }
-  }
+  /* Two rows of two cost 81px of a phone screen the board needs for
+     bookings, so all four stay on one row and the label shrinks to fit
+     a quarter of the narrowest handset. */
+  .stats{ grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; padding:12px 14px 0; }
+  .stat{ padding:10px 8px; }
+  .stat span{ font-size:10.5px; }
+  .stat b.num{ font-size:21px; }
   @media (min-width: 700px){
+    .stats{ gap:10px; }
+    .stat{ padding:10px 12px; }
     .stat span{ font-size:12px; }
     .stat b.num{ font-size:24px; }
   }
@@ -851,7 +867,8 @@
 
   /* --- 6. day headings --- */
   .dayhead{
-    position:sticky; top:56px; z-index:20;
+    /* Meets the bar, rather than tucking 2px under it. */
+    position:sticky; top:58px; z-index:20;
     margin:16px 0 8px; padding:6px 0;
     display:flex; align-items:baseline; gap:9px;
     background:linear-gradient(180deg,var(--paper) 68%,transparent);
@@ -963,7 +980,10 @@
     /* One column. Two left a 457px card beside 457px of nothing on every
        day with a single booking, which is most days. */
     .daygroup{ grid-template-columns:minmax(0,1fr); align-items:start; gap:12px; }
-    .dayhead{ top:58px; margin:20px 0 10px; }
+    .dayhead{ top:60px; margin:20px 0 10px; }
+    /* No thumb bar up here, so the pill goes to the margin beside the rail
+       instead of sitting over a card. */
+    .sync-dot{ left:auto; right:20px; transform:none; bottom:20px; }
 
     /* Capped to the screen and scrolled internally. Left uncapped, a rail
        taller than the viewport slides away with the page and only catches
@@ -1037,9 +1057,11 @@
 </header>
 <div id="app">
 
-  <div class="segment" id="modeSegment" role="tablist">
-    <button type="button" role="tab" id="modeBookings" aria-selected="true">Bookings</button>
-    <button type="button" role="tab" id="modeEvents" aria-selected="false">Upcoming events</button>
+  <div class="segment" id="modeSegment" role="tablist" aria-label="Which board">
+    <button type="button" role="tab" id="modeBookings" aria-selected="true"
+            aria-controls="bookingsArea" tabindex="0">Bookings</button>
+    <button type="button" role="tab" id="modeEvents" aria-selected="false"
+            aria-controls="eventsArea" tabindex="-1">Upcoming events</button>
   </div>
 
   <section class="tonight" id="tonightStrip" hidden>
@@ -1065,12 +1087,12 @@
 
   <div class="stats" id="stats"></div>
 
-  <div id="eventsArea" hidden>
+  <div id="eventsArea" role="tabpanel" aria-labelledby="modeEvents" hidden>
     <div class="stats" id="eventStats"></div>
     <div class="controls">
       <div class="tabs" id="eventTabs"></div>
       <div class="searchrow">
-        <input type="text" id="eventSearch" placeholder="Search events…">
+        <input type="text" id="eventSearch" placeholder="Search events…" aria-label="Search events">
         <button class="btn write-only" id="pasteOpen" type="button" title="Paste a week of fixtures">📋 Paste</button>
       </div>
       <div class="chiprow" id="sportChips"></div>
@@ -1082,11 +1104,11 @@
     <div id="eventList"></div>
   </div>
 
-  <div id="bookingsArea">
+  <div id="bookingsArea" role="tabpanel" aria-labelledby="modeBookings">
   <div class="controls">
     <div class="tabs" id="tabs"></div>
     <div class="searchrow">
-      <input type="text" id="search" placeholder="Search organiser or notes…">
+      <input type="text" id="search" placeholder="Search organiser or notes…" aria-label="Search bookings by organiser or notes">
     </div>
     <div class="chiprow" id="areaChips"></div>
     <div class="legend" id="legend"></div>
@@ -1635,7 +1657,7 @@
     // Never hand the stored text back. Every path the app controls writes
     // HH:MM, so an unparseable value is not a time — and it used to travel
     // straight into markup from the tonight strip and the rail.
-    if (isNaN(h) || isNaN(m)) return '';
+    if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return '';
     var suffix = h < 12 ? 'am' : 'pm';
     var h12 = h % 12; if (h12 === 0) h12 = 12;
     return h12 + ':' + (m < 10 ? '0' + m : m) + suffix;
@@ -1921,7 +1943,8 @@
 
     return (
       '<article class="card'+(open?' open':'')+'" style="--band-color:'+band.bg+'" data-id="'+escapeHtml(b.id)+'">'+
-        '<div class="card-head" data-toggle="'+escapeHtml(b.id)+'">'+
+        '<div class="card-head" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+
+          '" data-toggle="'+escapeHtml(b.id)+'">'+
           '<div class="datebadge when">'+(timeText
               ? '<b class="t num">'+escapeHtml(timeText)+'</b>'
               : '<b class="t num">—</b>')+'<span class="w">'+badge.weekday+'</span></div>'+
@@ -2378,7 +2401,8 @@
       '</div>';
     return (
       '<article class="card'+(open?' open':'')+'" style="--band-color:var(--gold)" data-eid="'+escapeHtml(e.id)+'">'+
-        '<div class="card-head" data-etoggle="'+escapeHtml(e.id)+'">'+
+        '<div class="card-head" role="button" tabindex="0" aria-expanded="'+(open?'true':'false')+
+          '" data-etoggle="'+escapeHtml(e.id)+'">'+
           '<div class="datebadge when">'+(time
               ? '<b class="t num">'+escapeHtml(time)+'</b>'
               : '<b class="t num">—</b>')+'<span class="w">'+badge.weekday+'</span></div>'+
@@ -2426,8 +2450,13 @@
     document.getElementById('stats').hidden = isEvents;
     document.getElementById('fabNew').hidden = isEvents;
     document.getElementById('fabNewEvent').hidden = !isEvents;
-    document.getElementById('modeBookings').setAttribute('aria-selected', isEvents ? 'false' : 'true');
-    document.getElementById('modeEvents').setAttribute('aria-selected', isEvents ? 'true' : 'false');
+    // A tablist moves with the arrow keys and keeps one stop in the tab
+    // order, so the selected tab is the only one Tab lands on.
+    var mb = document.getElementById('modeBookings'), me = document.getElementById('modeEvents');
+    mb.setAttribute('aria-selected', isEvents ? 'false' : 'true');
+    me.setAttribute('aria-selected', isEvents ? 'true' : 'false');
+    mb.tabIndex = isEvents ? -1 : 0;
+    me.tabIndex = isEvents ? 0 : -1;
     document.getElementById('toolLabel').textContent = isEvents ? "What's On" : 'Function Sheet';
     document.getElementById('topAddLabel').textContent = isEvents ? 'New event' : 'New booking';
     // The old-events prompt is about bookings; it has no business shouting
@@ -2931,10 +2960,12 @@
   var polling = false;
   // Refreshing under someone who is part-way through typing is worse than
   // being a few seconds stale.
+  var DIALOG_IDS = ['bookingDialog','confirmDialog','eventDialog','eventConfirm','pasteDialog',
+                    'staleDialog','lightbox','termsDialog','settingsDialog'];
   function anyDialogOpen(){
-    return ['bookingDialog','confirmDialog','eventDialog','eventConfirm','pasteDialog',
-            'staleDialog','lightbox','termsDialog','settingsDialog']
-      .some(function(id){ var d = document.getElementById(id); return d && d.open; });
+    return DIALOG_IDS.some(function(id){
+      var d = document.getElementById(id); return d && d.open;
+    });
   }
 
   function startPolling(){
@@ -3020,7 +3051,9 @@
     }).join('');
     document.getElementById('staleIntroCount').textContent = stale.length;
     document.getElementById('staleBannerCount').textContent = stale.length;
-    document.getElementById('staleBanner').hidden = !stale.length;
+    // setMode hides this on the events board, then calls renderAll, which
+    // lands here — so it has to know about the mode too or it comes back.
+    document.getElementById('staleBanner').hidden = mode === 'events' || !stale.length;
     return stale;
   }
 
@@ -3406,6 +3439,16 @@
       view.search = e.target.value; renderList();
     });
 
+    function headKeys(e){
+      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+      var head = e.target.closest('[data-toggle],[data-etoggle]');
+      if (!head || head !== e.target) return;   // a button inside keeps its own keys
+      e.preventDefault();
+      head.click();
+    }
+    document.getElementById('list').addEventListener('keydown', headKeys);
+    document.getElementById('eventList').addEventListener('keydown', headKeys);
+
     document.getElementById('list').addEventListener('click', function(e){
       var thumb = e.target.closest('[data-file]');
       if (thumb){
@@ -3485,6 +3528,17 @@
 
     document.getElementById('modeBookings').addEventListener('click', function(){ setMode('bookings'); });
     document.getElementById('modeEvents').addEventListener('click', function(){ setMode('events'); });
+    document.getElementById('modeSegment').addEventListener('keydown', function(e){
+      var next = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = 'events';
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = 'bookings';
+      else if (e.key === 'Home') next = 'bookings';
+      else if (e.key === 'End') next = 'events';
+      if (!next) return;
+      e.preventDefault();
+      setMode(next);
+      document.getElementById(next === 'events' ? 'modeEvents' : 'modeBookings').focus();
+    });
     document.getElementById('topAdd').addEventListener('click', function(){
       if (mode === 'events'){
         if (!TABLE_OK.events){ showToast('The events table isn\u2019t set up yet — see the README.'); return; }
@@ -3759,7 +3813,7 @@
     } else {
       body = '<img src="'+escapeHtml(url)+'" alt="">';
     }
-    wrap.innerHTML = '<button class="lbclose" type="button">✕</button>' + body;
+    wrap.innerHTML = '<button class="lbclose" type="button" aria-label="Close">✕</button>' + body;
     document.getElementById('lightbox').showModal();
   }
 
@@ -3815,7 +3869,33 @@
     });
   }
 
+  // A modal covers the page but does not stop it scrolling: a gesture over
+  // the backdrop, or one that runs past the end of the sheet, moved the
+  // board underneath and left the manager somewhere else in the list.
+  var lockedScrollY = 0;
+  function syncScrollLock(){
+    var root = document.documentElement;
+    var open = anyDialogOpen();
+    if (open && !root.classList.contains('dialog-open')){
+      lockedScrollY = window.scrollY || window.pageYOffset || 0;
+      root.classList.add('dialog-open');
+    } else if (!open && root.classList.contains('dialog-open')){
+      root.classList.remove('dialog-open');
+      try { window.scrollTo(0, lockedScrollY); } catch(e){}
+    }
+  }
+  function watchDialogs(){
+    DIALOG_IDS.forEach(function(id){
+      var d = document.getElementById(id);
+      if (!d || typeof d.showModal !== 'function') return;
+      var show = d.showModal;
+      d.showModal = function(){ show.call(d); syncScrollLock(); };
+      d.addEventListener('close', syncScrollLock);
+    });
+  }
+
   function boot(){
+    watchDialogs();
     renderAll();
     // Static content — built once, not on every re-render.
     renderTerms();
