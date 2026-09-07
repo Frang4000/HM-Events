@@ -109,33 +109,11 @@
     padding:20px 18px 16px; text-align:center; border-radius:0 0 20px 20px;
   }
   .topbar h1{ margin:0; }
-  .brand-logo{ width:min(168px, 46vw); height:auto; display:block; margin:0 auto; }
-  .tool-label{
-    font-family:'Oswald', system-ui, sans-serif; font-weight:600; text-transform:uppercase;
-    letter-spacing:.12em; font-size:12px; color:var(--gold); margin:11px 0 0;
-  }
-  .subhead{ color:rgba(244,241,226,.62); font-size:12.5px; margin:5px 0 0; }
   /* Sits in the brand band, so it uses the fixed gold like the logo does. */
   /* Top left of the brand band, opposite the logo. Absolute so it doesn't
      shove the centred logo off-axis. */
-  .areaswitch{
-    position:absolute; top:12px; left:12px; z-index:5;
-    background:rgba(244,241,226,.10); border:1px solid rgba(200,161,68,.5);
-    color:var(--gold); border-radius:999px; padding:8px 14px;
-    font-size:12.5px; font-weight:600; cursor:pointer; min-height:40px;
-    max-width:calc(100% - 24px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
-  }
-  @media (hover:hover) and (pointer:fine){
-    .areaswitch:hover{ background:rgba(244,241,226,.16); border-color:var(--gold); }
-  }
-  .areaswitch:active{ background:rgba(244,241,226,.22); transform:scale(.97); }
   .topbar{ position:relative; }
   /* Mirrors the board switch on the other side of the band. */
-  .settingsbtn{
-    left:auto; right:12px; padding:8px 0; width:40px; text-align:center;
-    font-size:16px; line-height:1;
-  }
 
   .themerow{ display:flex; gap:8px; }
   .themeopt{
@@ -182,18 +160,6 @@
   .crowd-steady { background:#E4EAF7; color:#2B4680; }
   .crowd-busy   { background:#FBE9D8; color:#8A430B; }
   .crowd-packed { background:#FBE3E4; color:#98262D; }
-
-  .tc-btn{
-    margin:13px auto 0; display:inline-flex; align-items:center; gap:7px;
-    background:rgba(244,241,226,.08); border:1px solid rgba(200,161,68,.5);
-    color:var(--gold); border-radius:999px; padding:9px 16px;
-    font-size:12.5px; font-weight:600; cursor:pointer; min-height:40px;
-    transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
-  }
-  @media (hover:hover) and (pointer:fine){
-    .tc-btn:hover{ background:rgba(244,241,226,.15); border-color:var(--gold); }
-  }
-  .tc-btn:active{ background:rgba(244,241,226,.2); transform:scale(.97); }
 
   .terms-intro{ color:var(--ink-soft); font-size:13px; line-height:1.5; margin:0 0 18px; }
   .terms-sec{ margin-bottom:18px; }
@@ -331,8 +297,6 @@
     flex:none; width:52px; text-align:center; padding:5px 0 6px; border-radius:9px;
     background:var(--surface-2);
   }
-  .datebadge .d{ display:block; font-family:'IBM Plex Mono',monospace; font-size:19px; font-weight:600; line-height:1.1; }
-  .datebadge .m{ display:block; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); }
   .datebadge .w{ display:block; font-size:9.5px; color:var(--ink-faint); margin-top:1px; }
 
   .card-body{ flex:1; min-width:0; }
@@ -647,7 +611,6 @@
     .checkrow{ flex-direction:column; }
   }
 
-
   /* ---------- sign in ---------- */
   /* Also named with the input selector, because ".auth-card input" is more
      specific and was overriding the width — leaving this "hidden" field a
@@ -690,7 +653,8 @@
 
   .sync-dot{
     /* Centred under the bar: top-right now belongs to Settings. */
-    position:fixed; top:66px; left:50%; transform:translateX(-50%); z-index:30;
+    /* Below the segment, not across it. */
+    position:fixed; top:128px; left:50%; transform:translateX(-50%); z-index:30;
     background:var(--gold); color:var(--brand-green-deep); font-size:10.5px; font-weight:700;
     padding:4px 10px; border-radius:999px; letter-spacing:.04em; white-space:nowrap;
     box-shadow:0 4px 14px -6px rgba(0,0,0,.5);
@@ -721,7 +685,13 @@
     display:flex; align-items:center; padding:9px 14px; border-radius:0;
     box-shadow:0 1px 0 rgba(0,0,0,.25);
   }
-  .topbar .inner{ display:flex; align-items:center; gap:11px; width:100%; }
+  /* The band runs edge to edge; its contents line up with the page inside.
+     Kept inside #app it stopped at 1320px and read as a floating panel on
+     a 1512px laptop. */
+  .topbar .inner{
+    display:flex; align-items:center; gap:11px; width:100%;
+    max-width:1272px; margin:0 auto;
+  }
   /* The elephant stands on its own on the green — it is gold line art on a
      transparent ground, so it needs no plaque behind it. The wordmark is set
      as type beside it rather than baked into a squashed image. */
@@ -729,7 +699,7 @@
   .topbar .mark img{ height:100%; width:auto; display:block; }
   .topbar .who{ min-width:0; flex:1; display:flex; flex-direction:column; justify-content:center; gap:1px; }
   .topbar .who .wordmark{
-    display:block; font-family:'Oswald',system-ui,sans-serif; font-weight:600;
+    display:block; margin:0; font-family:'Oswald',system-ui,sans-serif; font-weight:600;
     text-transform:uppercase; letter-spacing:.14em; font-size:15px; line-height:1.1;
     color:var(--on-brand); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
@@ -742,8 +712,18 @@
   @media (max-width: 479px){
     .topbar .who .wordmark{ font-size:14px; letter-spacing:.05em; }
   }
+  /* A 320px handset has 127px for a wordmark that wants 157, so the bar
+     gives back its own padding before the name gets cut. */
+  @media (max-width: 359px){
+    .topbar{ padding:9px 10px; }
+    .topbar .inner{ gap:7px; }
+    .topbar .mark{ height:28px; }
+    .topbar .who .wordmark{ font-size:12.5px; letter-spacing:.02em; }
+  }
   .topbar .who .subline .sep{ display:none; }
   .topbar .who .subline #dateline{ display:none; }
+  .topbar .who .subline #datelineShort{ display:inline; }
+  .topbar .who .subline #datelineShort::before{ content:" · "; opacity:.6; }
   /* The date only earns its place once the bar is wide enough for it.
      Note the defaults sit ABOVE this query: a media block adds no
      specificity, so a later plain rule would beat it. */
@@ -753,6 +733,7 @@
       background:currentColor; opacity:.6; margin:0 7px; vertical-align:middle;
     }
     .topbar .who .subline #dateline{ display:inline; }
+    .topbar .who .subline #datelineShort{ display:none; }
   }
   .iconbtn{
     min-height:40px; min-width:40px; padding:0 11px; flex:none;
@@ -806,9 +787,32 @@
   .tonight time{ font-family:'IBM Plex Mono',monospace; font-weight:600; min-width:56px; flex:none; }
   .tonight .sub{ color:var(--ink-soft); font-size:12.5px; }
   .tonight .none, .panel .none{ color:var(--ink-faint); font-size:13.5px; margin:0; }
+  /* On a phone this sits directly above a Today heading listing the same
+     bookings, so it keeps the glance and drops the second line. In the
+     laptop rail, where it stands beside the list, it keeps everything. */
+  @media (max-width: 999px){
+    .tonight{ padding:11px 13px; }
+    .tonight h2{ margin-bottom:6px; }
+    .tonight ul{ gap:6px; }
+    .tonight .sub{ display:none; }
+  }
 
   /* --- 4. stat tiles --- */
+  /* Two rows of two cost 81px of a phone screen that the board needs for
+     bookings. Four across fits from 360px; only a 320px handset needs the
+     stack. */
   .stats{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding:12px 14px 0; }
+  @media (min-width: 360px){
+    .stats{ grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+    .stat{ padding:10px 8px; }
+    /* A quarter of a phone is 52px of label; "bookings" at 12px wants 54. */
+    .stat span{ font-size:10.5px; }
+    .stat b.num{ font-size:21px; }
+  }
+  @media (min-width: 700px){
+    .stat span{ font-size:12px; }
+    .stat b.num{ font-size:24px; }
+  }
   .stat{
     min-height:64px; padding:10px 12px; border-radius:14px; text-align:left;
     display:flex; flex-direction:column; justify-content:center; gap:2px;
@@ -825,7 +829,9 @@
   }
   button.stat:active{ transform:scale(.985); }
   .stat b.num{ font-size:24px; }
-  .stat span{ font-size:12px; }
+  /* 9.5px small caps read as a label; the same words at 12px read as
+     shouting, so the tracking and the transform come off with the size. */
+  .stat span{ font-size:12px; text-transform:none; letter-spacing:0; overflow-wrap:anywhere; }
 
   /* --- 5. controls --- */
   .controls{ padding:14px 14px 0; display:grid; gap:10px; }
@@ -930,24 +936,33 @@
      screen and a half of empty paper. */
   @media (min-width: 1000px){
     #app{ max-width:1320px; padding-bottom:34px; }
-    .topbar{ padding:10px 24px; }
+    .topbar{ padding:10px 0; }
+    .topbar .inner{ padding:0 24px; }
     .topbar .mark{ height:38px; }
     .topbar .who .wordmark{ font-size:16.5px; letter-spacing:.16em; }
     .iconbtn .lbl{ display:inline; }
-    .segment{ margin:16px 24px 0; max-width:360px; }
+    .segment{
+      margin:16px 0 0; width:min(360px, 100%);
+      margin-left:max(24px, calc((100% - 1064px) / 2));   /* = the grid's left edge */
+    }
     .tonight{ display:none; }          /* it lives in the rail up here */
-    .stats{ grid-template-columns:repeat(4,minmax(0,1fr)); padding:14px 24px 0; gap:12px; }
+    .stats{ grid-template-columns:repeat(4,minmax(0,1fr)); padding:14px 0 0; gap:12px; }
     .stat{ min-height:80px; }
     .stat b.num{ font-size:29px; }
 
     .pagegrid{
-      display:grid; grid-template-columns:minmax(0,1fr) 320px;
+      display:grid; grid-template-columns:minmax(0,720px) 320px;
+      justify-content:center;
       gap:24px; align-items:start; padding:0 24px; margin-top:2px;
     }
     .maincol{ min-width:0; }
     .controls{ padding:16px 0 0; }
     #list{ padding:0; }
-    .daygroup{ grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:12px 14px; }
+    /* Nobody types 900px of search. */
+    .searchrow{ max-width:420px; }
+    /* One column. Two left a 457px card beside 457px of nothing on every
+       day with a single booking, which is most days. */
+    .daygroup{ grid-template-columns:minmax(0,1fr); align-items:start; gap:12px; }
     .dayhead{ top:58px; margin:20px 0 10px; }
 
     /* Capped to the screen and scrolled internally. Left uncapped, a rail
@@ -1008,19 +1023,19 @@
 </script>
 
 <div id="page-root">
-<div id="app">
-  <header class="topbar">
+<header class="topbar">
     <div class="inner">
       <div class="mark"><img src="logo-mark.png" alt="" width="531" height="354"></div>
       <div class="who">
-        <b class="wordmark">Hotel Maroubra</b>
-        <span class="subline"><span id="toolLabel">Function Sheet</span><i class="sep" aria-hidden="true"></i><span id="dateline"></span></span>
+        <h1 class="wordmark">Hotel Maroubra</h1>
+        <span class="subline"><span id="toolLabel">Function Sheet</span><i class="sep" aria-hidden="true"></i><span id="dateline"></span><span id="datelineShort"></span></span>
       </div>
       <button class="iconbtn addbtn write-only" id="topAdd" type="button">+<span class="lbl" id="topAddLabel">New booking</span></button>
       <button class="iconbtn" id="termsOpen" type="button" title="Event T&amp;Cs" aria-label="Event T&amp;Cs">📋<span class="lbl">T&amp;Cs</span></button>
       <button class="iconbtn" id="settingsOpen" type="button" aria-label="Settings">⚙<span class="lbl">Settings</span></button>
     </div>
-  </header>
+</header>
+<div id="app">
 
   <div class="segment" id="modeSegment" role="tablist">
     <button type="button" role="tab" id="modeBookings" aria-selected="true">Bookings</button>
@@ -1492,12 +1507,10 @@
   </div>
 </div>
 
-
 <script src="config.js"></script>
 <script id="app-script">
 (function(){
   "use strict";
-
 
   var AREAS = ["Front Bar","Back Bar","Whole Venue","Restaurant","Beer Garden + Restaurant"];
   // Buckets for the events board's sport chips. "Soccer" also catches the
@@ -2522,7 +2535,13 @@
 
   function renderAll(){
     renderedDay = todayKey();
-    document.getElementById('dateline').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    var now = new Date();
+    document.getElementById('dateline').textContent =
+      now.toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    // A phone has no room for the long form, but losing the date entirely
+    // took something the old header always showed.
+    document.getElementById('datelineShort').textContent =
+      now.toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short'});
     renderStats();
     renderTabs();
     renderAreaChips();
@@ -3743,7 +3762,6 @@
     wrap.innerHTML = '<button class="lbclose" type="button">✕</button>' + body;
     document.getElementById('lightbox').showModal();
   }
-
 
   // ---------------- sign in / boot ----------------
   function showAuth(message){
