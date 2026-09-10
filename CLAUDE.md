@@ -107,8 +107,11 @@ Say so plainly rather than implying live verification.
   the board look shuffled.
 - **Area chips are OR**, not AND. Ticking a second area widens the list.
 - **Bookings are never auto-deleted.** Old ones prompt; a human clears them.
-  Events are the one exception: `pruneFinishedEvents()` drops an event two
-  hours after it starts, because an event is a heads-up, not a record.
+  Events are the one exception: `pruneFinishedEvents()` drops an event at 4am
+  the morning after its date, because an event is a heads-up, not a record.
+  It used to go two hours after kick-off, which took a 7:50pm final off every
+  phone at 9:50pm while the room was still full because of it. **The night is
+  the unit, not the whistle** — don't reintroduce a rule keyed to start time.
 - **The brand bar is sticky and stays around 58–60px.** It carries the
   elephant mark, the HOTEL MAROUBRA wordmark and a sub-line naming the board
   and the date. Growing it is the first thing that ruins a phone.

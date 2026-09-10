@@ -110,13 +110,16 @@ starting with `#` are ignored. It shows what it found before adding anything,
 flags any line it couldn't read, and skips events already on the board — so
 pasting the same list twice is harmless.
 
-**Events clear themselves two hours after they start.** A finished game is
-clutter on a board people scan mid-shift. An event with no start time survives
-until the end of its day. This applies only to events — **bookings are never
-removed on their own**, which is deliberate and shouldn't change.
+**Events clear themselves the morning after they're on**, at 4am. A finished
+game is clutter on a board people scan mid-shift, but the night it belongs to
+is the unit — not the final whistle. A grand final that kicks off at 7:50pm is
+the reason the room is full at 9:50pm, so it stays up; an 11pm kick-off stays
+up too, and so does anything that runs long. By the time the day shift arrives
+it's gone. This applies only to events — **bookings are never removed on their
+own**, which is deliberate and shouldn't change.
 
-To keep them longer, change `EVENT_KEEP_HOURS` near the top of the events code
-in `index.html`.
+4am rather than midnight because the pub is still open at midnight. To move it,
+change `EVENT_CLEAR_HOUR` near the top of the events code in `index.html`.
 
 ---
 

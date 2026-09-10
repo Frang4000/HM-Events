@@ -442,18 +442,18 @@
     {
       "id": "events-self-clear",
       "type": "decision",
-      "title": "Events clear themselves two hours after they start",
+      "title": "Events clear themselves the morning after, not two hours after kick-off",
       "tags": [
         "events",
         "data"
       ],
-      "what": "pruneFinishedEvents() runs after every load and deletes events more than EVENT_KEEP_HOURS past their start. One with no time survives to the end of its day. An unparseable date is left alone.",
-      "why": "An explicit exception to never-auto-delete, and the reason the two differ: a booking is a commercial record, an event is a heads-up that is pure clutter once the game has been and gone.",
+      "what": "pruneFinishedEvents() runs after every load and deletes events whose date has passed EVENT_CLEAR_HOUR (4am) on the following morning. An event with no start time is treated the same. An unparseable date is left alone.",
+      "why": "An explicit exception to never-auto-delete, and the reason the two differ: a booking is a commercial record, an event is a heads-up that is clutter once the night is over. The first version keyed off START time plus two hours, which took a 7:50pm grand final off every phone at 9:50pm — mid-second-half, silently, while the room was full because of it. The night is the unit, not the whistle; 4am rather than midnight because the pub is still open at midnight and a late kick-off is still going.",
       "relates_to": [
         "never-auto-delete",
         "events-board"
       ],
-      "date": "2026-09-04"
+      "date": "2026-09-10"
     },
     {
       "id": "paste-fixtures",

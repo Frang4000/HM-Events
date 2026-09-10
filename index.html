@@ -2791,28 +2791,33 @@
     });
   }
 
-  // An event is a heads-up, not a record — once the game has been and gone it
-  // is clutter on a board people scan mid-shift, so it clears itself. Bookings
-  // are the opposite and are never removed without someone saying so.
-  var EVENT_KEEP_HOURS = 2;
-  function eventStartsAt(e){
+  // An event is a heads-up, not a record — once the night it belongs to is over
+  // it is clutter on a board people scan mid-shift, so it clears itself.
+  // Bookings are the opposite and are never removed without someone saying so.
+  //
+  // This used to fire two hours after KICK-OFF, which meant a final starting at
+  // 7:50pm vanished off every phone at 9:50pm: mid-second-half, with no message,
+  // while the room was still full because of it. The night is the unit here, not
+  // the whistle. An event stays up until the pub has closed and the day has
+  // properly turned over, so a late kick-off and a game that runs long are both
+  // still on the board for as long as anyone is watching them.
+  var EVENT_CLEAR_HOUR = 4;   // 4am: after last drinks, before the day shift
+  function eventClearsAt(e){
     if (!e || !e.date) return null;
     var d = parseYMD(e.date);
     if (isNaN(d)) return null;
-    var m = /^(\d{1,2}):(\d{2})$/.exec(String(e.time || ''));
-    // No start time given, so treat it as running to the end of its day
-    // rather than clearing at midnight the moment the date arrives.
-    if (m) d.setHours(parseInt(m[1],10), parseInt(m[2],10), 0, 0);
-    else d.setHours(23, 59, 0, 0);
+    // The morning after, not midnight — an 11pm kick-off is still going.
+    d.setDate(d.getDate() + 1);
+    d.setHours(EVENT_CLEAR_HOUR, 0, 0, 0);
     return d;
   }
   function pruneFinishedEvents(){
     if (!session || isReadOnly || !TABLE_OK.events) return;
-    var cutoff = Date.now() - EVENT_KEEP_HOURS * 3600 * 1000;
+    var now = Date.now();
     var previous = (state.events || []).slice();
     var next = previous.filter(function(e){
-      var t = eventStartsAt(e);
-      return !t || t.getTime() > cutoff;   // unparseable date: leave it alone
+      var t = eventClearsAt(e);
+      return !t || t.getTime() > now;   // unparseable date: leave it alone
     });
     if (next.length === previous.length) return;
     state.events = next;
